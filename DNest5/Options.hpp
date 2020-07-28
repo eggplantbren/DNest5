@@ -47,6 +47,10 @@ class Options
         // Stuff the user doesn't need to control
         static constexpr auto db_filename = ".db/dnest5.db";
         static constexpr int stdout_precision = 12;
+
+        // Friend
+        template<typename T>
+        friend class Sampler;
 };
 
 /* Implementations follow */

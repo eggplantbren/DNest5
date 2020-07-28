@@ -1,6 +1,7 @@
 #ifndef DNest5_Database_hpp
 #define DNest5_Database_hpp
 
+#include <DNest5/Misc.hpp>
 #include <DNest5/Options.hpp>
 #include <iostream>
 #include <sqlite_modern_cpp/hdr/sqlite_modern_cpp.h>
@@ -16,11 +17,15 @@ class Database
         sqlite::database db;
         void pragmas();
         void create_tables();
+        void clear_previous();
 
     public:
         Database();
         ~Database();
 
+        // Friend
+        template<typename T>
+        friend class Sampler;
 };
 
 /* Implementations follow */
@@ -28,14 +33,12 @@ class Database
 Database::Database()
 :db(Options::db_filename)
 {
-    std::cout << "Initialising database..." << std::flush;
+    std::cout << "Initialising database." << std::endl;
 
     pragmas();
     db << "BEGIN;";
     create_tables();
     db << "COMMIT;";
-
-    std::cout << "done." << std::endl;
 }
 
 Database::~Database()
@@ -61,8 +64,26 @@ void Database::create_tables()
              beta                   REAL NOT NULL,\
              max_num_saves          INTEGER NOT NULL,\
              rng_seed               INTEGER NOT NULL);";
+
+    db << "CREATE TABLE IF NOT EXISTS particles\
+            (id      INTEGER NOT NULL PRIMARY KEY,\
+             sampler INTEGER,\
+             logl    REAL NOT NULL,\
+             tb      REAL NOT NULL,\
+             params  BLOB,\
+             FOREIGN KEY (sampler) REFERENCES samplers (id));";
+
+    // Insert the zero particle
+    db << "INSERT INTO particles VALUES (0, null, ?, 0.0, null)\
+            ON CONFLICT (id) DO NOTHING;"
+       << minus_infinity;
 }
 
+void Database::clear_previous()
+{
+    db << "DELETE FROM samplers;";
+    db << "DELETE FROM particles WHERE id != 0;";
+}
 
 } // namespace
 

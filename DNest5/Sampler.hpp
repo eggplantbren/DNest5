@@ -20,7 +20,7 @@ class Sampler
         Database database;
 
         // A set of options
-        Options options;
+        const Options options;
 
         // The random number generator
         RNG rng;
@@ -37,6 +37,21 @@ class Sampler
 };
 
 /* IMPLEMENTATIONS FOLLOW */
+
+template<typename T>
+Sampler<T>::Sampler(Options _options)
+:options(_options)
+{
+    auto& db = database.db;
+    if(options.clear_previous)
+    {
+        std::cout << "Clearing previous runs." << std::endl;
+        db << "BEGIN;";
+        database.clear_previous();
+        db << "COMMIT;";
+    }
+//    std::cout << "Setting up sampler.
+}
 
 } // namespace
 
