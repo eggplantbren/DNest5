@@ -1,0 +1,5 @@
+.build/*
+.db/*
+main
+Makefile
+__pycache__
