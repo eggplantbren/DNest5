@@ -36,7 +36,7 @@ class Options
                 int _new_level_interval = 10000,
                 int _save_interval = 5000,
                 int _metadata_save_interval = 1000,
-                std::optional<int> max_num_levels = std::optional<int>(),
+                std::optional<int> max_num_levels = 100, //std::optional<int>(),
                 double _lambda = 10.0,
                 double _beta = 100.0,
                 int _max_num_saves = 20000,

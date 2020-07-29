@@ -23,6 +23,7 @@ class Levels
         std::vector<double> logxs;
         std::vector<Pair> pairs;
         std::vector<double> log_push;
+        bool push_is_active;
 
         // Statistics
         std::vector<unsigned long long> exceeds, visits, accepts, tries;
@@ -48,6 +49,9 @@ class Levels
         // Revise logxs
         void revise();
 
+        // Recent change in level log likelihood
+        double recent_logl_changes() const;
+
         // Various getters
         int get_num_levels() const { return int(logxs.size()); }
         double get_logx(int level) const { return logxs[level]; }
@@ -66,6 +70,7 @@ Levels::Levels(const Options& _options)
 ,logxs{0.0}
 ,pairs{{minus_infinity, 0.0}}
 ,log_push{0.0}
+,push_is_active(true)
 ,exceeds{0}, visits{0}, accepts{0}, tries{0}
 {
     // Reserve some RAM
@@ -85,8 +90,9 @@ Levels::Levels(const Options& _options)
 bool Levels::add_to_stash(Pair&& pair)
 {
     // Bail if this is a cow's opinion
-    if(options.max_num_levels.has_value()
-        && int(logxs.size()) >= *options.max_num_levels)
+    if((options.max_num_levels.has_value()
+            && int(logxs.size()) >= *options.max_num_levels)
+        || !push_is_active)
     {
         if(stash.size() > 0)
             stash.clear();
@@ -122,12 +128,24 @@ void Levels::create_level()
     log_push.push_back(0.0);
     stash.clear();
 
+    // See if push should be disabled
+    if(options.max_num_levels.has_value())
+    {
+        if(int(logxs.size()) >= *options.max_num_levels)
+            push_is_active = false;
+    }
+    else
+    {
+        if(recent_logl_changes() <= 0.5)
+            push_is_active = false;
+    }
+    if(!push_is_active)
+        std::cout << "Done creating levels." << std::endl;
+
     // Recompute log_push
-    bool push = !options.max_num_levels.has_value()
-                      || int(logxs.size()) < *options.max_num_levels;
     for(int i=0; i<int(logxs.size()); ++i)
     {
-        if(push)
+        if(push_is_active)
         {
             double dist = double(logxs.size()) - 1.0 - double(i);
             log_push[i] = -log(1.0 + pow(dist/options.lambda, 2));
@@ -170,6 +188,23 @@ void Levels::record_stats(const Particle<T>& particle, bool accepted)
     if(accepted)
         ++accepts[level];
     ++tries[level];
+}
+
+
+double Levels::recent_logl_changes() const
+{
+    int end   = int(logxs.size());
+    int start = end - 20;
+    if(start < 1)
+        start = 1;
+    double numerator   = 0.0;
+    double denominator = 0.0;
+    for(int i=start; i<end; ++i)
+    {
+        numerator   += (i-start+1)*(std::get<0>(pairs[i]) - std::get<0>(pairs[i-1]));
+        denominator += (i-start+1);
+    }
+    return numerator/denominator;
 }
 
 
