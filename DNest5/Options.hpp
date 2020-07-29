@@ -1,6 +1,8 @@
 #ifndef DNest5_Options_hpp
 #define DNest5_Options_hpp
 
+#include <cassert>
+#include <cmath>
 #include <ctime>
 #include <iomanip>
 #include <iostream>
@@ -49,9 +51,11 @@ class Options
         static constexpr int stdout_precision = 12;
         static constexpr int rng_seed_gap = 123;
 
-        // Friend
+        // Friends
         template<typename T>
         friend class Sampler;
+
+        friend class Levels;
 };
 
 /* Implementations follow */
@@ -78,6 +82,7 @@ Options::Options(int _num_particles,
 ,clear_previous(_clear_previous)
 {
     std::cout << std::setprecision(stdout_precision);
+    assert(save_interval % metadata_save_interval == 0);
 }
 
 Options::Options(const char* yaml_file)

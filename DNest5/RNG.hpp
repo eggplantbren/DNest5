@@ -36,6 +36,9 @@ class RNG
         // A heavy-tailed distribution for proposals
         double randh();
 
+        // Cauchy
+        double randc();
+
         // Integer from {0, 1, 2, ..., N-1}
         int rand_int(int N);
 
@@ -69,8 +72,12 @@ double RNG::randn()
 
 double RNG::randh()
 {
-    double cauchy = tan(M_PI*(this->rand() - 0.5));
-    return pow(10.0, 1.0 - std::abs(cauchy))*this->randn();
+    return pow(10.0, 1.0 - std::abs(this->randc()))*this->randn();
+}
+
+double RNG::randc()
+{
+    return tan(M_PI*(this->rand() - 0.5));
 }
 
 int RNG::rand_int(int N)

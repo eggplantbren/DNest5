@@ -7,6 +7,7 @@ using namespace DNest5;
 int main()
 {
     Sampler<SpikeSlab> sampler;
+    sampler.run();
     return 0;
 }
 

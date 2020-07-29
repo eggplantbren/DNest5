@@ -23,6 +23,8 @@ class Database
         Database();
         ~Database();
 
+        int num_full_particles(int sampler_id);
+
         // Friend
         template<typename T>
         friend class Sampler;
@@ -78,6 +80,7 @@ void Database::create_tables()
     db << "CREATE TABLE IF NOT EXISTS levels\
             (sampler INTEGER NOT NULL,\
              level   INTEGER NOT NULL,\
+             logx    REAL NOT NULL,\
              logl    REAL NOT NULL,\
              tb      REAL NOT NULL,\
              PRIMARY KEY (sampler, level),\
@@ -90,6 +93,14 @@ void Database::clear_previous()
     db << "DELETE FROM samplers;";
     db << "DELETE FROM particles;";
     db << "DELETE FROM levels;";
+}
+
+int Database::num_full_particles(int sampler_id)
+{
+    int num;
+    db << "SELECT COUNT(params) FROM particles WHERE sampler = ?;"
+       << sampler_id >> num;
+    return num;
 }
 
 } // namespace

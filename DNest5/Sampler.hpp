@@ -35,19 +35,36 @@ class Sampler
         // The levels
         Levels levels;
 
+        // Count work
+        unsigned long long work;
+
+        // Do a Metropolis step of particle k, or of its level
+        bool metropolis_step(int k);
+        bool metropolis_step_level(int k);
+
+        // Save levels or particles
+        void save_levels();
+        void save_particle(int k, bool with_params);
+
+        // Explore until a new level or save occurs.
+        void explore();
+
     public:
 
         // Construct with a set of options.
         Sampler(Options _options = Options());
 
+        // Run until termination
+        void run();
 };
 
 /* IMPLEMENTATIONS FOLLOW */
 
 template<typename T>
 Sampler<T>::Sampler(Options _options)
-:options(_options)
-,levels(options.new_level_interval, options.max_num_levels)
+:options(std::move(_options))
+,levels(options)
+,work(0)
 {
     // Shorthand to database connection
     auto& db = database.db;
@@ -90,14 +107,7 @@ Sampler<T>::Sampler(Options _options)
        << options.rng_seed;
 
     // Save level info to the database
-    int level = 0;
-    for(const auto& l: levels.get_logl_tb_pairs())
-    {
-        const auto& [logl, tb] = l;
-        db << "INSERT INTO levels (sampler, level, logl, tb)\
-                VALUES (?, ?, ?, ?);"
-           << sampler_id << level++ << logl << tb;
-    }
+    save_levels();
 
     // Generate initial particles
     std::cout << "    Generating " << options.num_particles << " particles ";
@@ -109,14 +119,167 @@ Sampler<T>::Sampler(Options _options)
         T t(rng);
         double logl = t.log_likelihood();
         double tb = rng.rand();
-        db << "INSERT INTO particles (sampler, level, params, logl, tb)\
-                VALUES (?, ?, ?, ?, ?);"
-           << sampler_id << level << t.to_blob() << logl << tb;
         particles.emplace_back(std::move(t), logl, tb, level);
+        save_particle(i, true);
     }
     std::cout << "done." << std::endl;
 
     db << "COMMIT;";
+}
+
+template<typename T>
+void Sampler<T>::run()
+{
+    while(database.num_full_particles(sampler_id) < options.max_num_saves)
+        explore();
+}
+
+template<typename T>
+void Sampler<T>::explore()
+{
+    std::cout << "Exploring." << std::endl;
+
+    // Local handy alias
+    auto& db = database.db;
+    db << "BEGIN;";
+    while(true)
+    {
+        // Choose a particle
+        int k = rng.rand_int(options.num_particles);
+
+        // Do a Metropolis step
+        metropolis_step(k);
+
+        // Add to stash
+        bool level_created = levels.add_to_stash(logl_tb(particles[k]));
+        if(level_created)
+            save_levels();
+
+        // Increment work
+        ++work;
+
+        // Save a particle
+        bool full_save = work % options.save_interval == 0;
+        if(work % options.metadata_save_interval == 0)
+            save_particle(k, full_save);
+
+        // Break out of the loop
+        if(full_save || level_created)
+            break;
+    }
+    db << "COMMIT;";
+
+    std::cout << "Work done = ";
+    std::cout << std::scientific << std::setprecision(3);
+    std::cout << double(work) << "." << std::endl;
+    std::cout << std::defaultfloat;
+    std::cout << std::setprecision(options.stdout_precision);
+    std::cout << std::endl;
+}
+
+template<typename T>
+void Sampler<T>::save_levels()
+{
+    // Alias
+    auto& db = database.db;
+
+    // Rewrite all levels from scratch (for this sampler ID)
+    db << "DELETE FROM levels WHERE sampler = ?;" << sampler_id;
+
+    int num_levels = levels.get_num_levels();
+    for(int i=0; i<num_levels; ++i)
+    {
+        const auto& [logl, tb] = levels.get_pair(i);
+        db << "INSERT INTO levels (sampler, level, logx, logl, tb)\
+                VALUES (?, ?, ?, ?, ?);"
+           << sampler_id << i << levels.get_logx(i) << logl << tb;
+    }
+}
+
+template<typename T>
+void Sampler<T>::save_particle(int k, bool with_params)
+{
+    // Alias
+    auto& db = database.db;
+
+    // Unpack
+    const auto& [t, logl, tb, level] = particles[k];
+
+    // Maybe a blob
+    std::optional<std::vector<char>> blob;
+    if(with_params)
+        blob = t.to_blob();
+
+    // Insert into the DB
+    db << "INSERT INTO particles (sampler, level, params, logl, tb)\
+            VALUES (?, ?, ?, ?, ?);"
+       << sampler_id << level << blob << logl << tb;
+
+    // Stdout message
+    if(with_params)
+    {
+        std::cout << "Saved particle ";
+        std::cout << database.num_full_particles(sampler_id);
+        std::cout << "." << std::endl;
+    }
+
+}
+
+
+
+template<typename T>
+bool Sampler<T>::metropolis_step(int k)
+{
+    // Return value
+    bool accepted = false;
+
+    // Unpack the particle and create a copy for the proposal
+    auto& particle = particles[k];
+    auto proposal = particle;
+    auto& [t, logl, tb, level] = particle;
+    auto& [t_prop, logl_prop, tb_prop, level_prop] = proposal;
+
+    // Make the proposal
+    double logh = t_prop.perturb(rng);
+
+    // Pre-reject
+    if(rng.rand() <= exp(logh))
+    {
+        logl_prop = t_prop.log_likelihood();
+        tb_prop += rng.randh(); wrap(tb_prop);
+        if(levels.get_pair(level) < Pair{logl_prop, tb_prop})
+        {
+            accepted = true;
+            particle = proposal;
+        }
+    }
+
+    // Now propose a change to the level
+    proposal = particle;
+    int mag  = 1.0 + int(std::abs(rng.randc()));
+    int sign = (rng.rand() <= 0.5)?(-1):(1);
+    level_prop += mag*sign;
+    level_prop = level_prop % levels.get_num_levels();
+    if(level_prop < 0) // Handle C++ unusual %
+        level_prop += levels.get_num_levels();
+
+    // Acceptance criterion when moving up
+    double loga = 0.0;
+    if(level_prop >= level && levels.get_pair(level_prop) < Pair{logl, tb})
+        loga = 0.0;
+    else // When moving down
+    {
+        // logx part
+        loga = levels.get_logx(level) - levels.get_logx(level_prop);
+
+        // Log push part
+        int num_levels = levels.get_num_levels();
+        loga += levels.get_log_push(level_prop) - levels.get_log_push(level);
+    }
+    if(rng.rand() <= exp(loga))
+        level = level_prop;
+
+    return accepted;
 }
 
 } // namespace

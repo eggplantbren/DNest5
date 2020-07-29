@@ -19,7 +19,7 @@ double logsumexp(const std::vector<double>& logv);
 double logdiffexp(double b, double a);
 void normalise_logps(std::vector<double>& logps);
 int mod(int y, int x);
-void wrap(double& x, double min, double max);
+void wrap(double& x, double min=0.0, double max=1.0);
 
 /* Implementations follow */
 
