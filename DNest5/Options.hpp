@@ -34,12 +34,12 @@ class Options
         // Constructor that specifies everything (or, use the defaults)
         Options(int _num_particles = 5,
                 int _new_level_interval = 10000,
-                int _save_interval = 5000,
-                int _metadata_save_interval = 1000,
+                int _save_interval = 10000,
+                int _metadata_save_interval = 10000,
                 std::optional<int> max_num_levels = 100, //std::optional<int>(),
                 double _lambda = 10.0,
                 double _beta = 100.0,
-                int _max_num_saves = 20000,
+                int _max_num_saves = 10000,
                 std::optional<int> _rng_seed = std::optional<int>(),
                 bool _clear_previous = true);
 
