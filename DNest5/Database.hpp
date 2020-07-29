@@ -45,7 +45,10 @@ Database::Database()
 
 Database::~Database()
 {
+    std::cout << "Tidying up database..." << std::flush;
+    db << "VACUUM;";
     db << "PRAGMA main.WAL_CHECKPOINT(TRUNCATE);";
+    std::cout << "done." << std::endl;
 }
 
 void Database::pragmas()
