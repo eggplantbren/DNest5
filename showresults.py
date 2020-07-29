@@ -15,7 +15,7 @@ for l in results:
 conn.close()
 
 plt.plot(results["ids"], results["levels"])
-plt.xlim("Iteration")
-plt.ylim("Level")
+plt.xlabel("Iteration")
+plt.ylabel("Level")
 plt.show()
 
