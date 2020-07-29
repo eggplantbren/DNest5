@@ -6,9 +6,9 @@
 namespace DNest5
 {
 
-// A particle is its parameters, logl, and tb, tupled together.
+// A particle is its parameters, logl, tb, and level j, tupled together.
 template<typename T>
-using Particle = std::tuple<T, double, double>;
+using Particle = std::tuple<T, double, double, int>;
 
 // One can extract the last two elements only
 template<typename T>
@@ -29,7 +29,7 @@ bool operator < (const Particle<T>& x, const Particle<T>& y);
 template<typename T>
 std::tuple<double, double> logl_tb(const Particle<T>& particle)
 {
-    const auto& [t, logl, tb] = particle;
+    const auto& [t, logl, tb, level] = particle;
     return {logl, tb};
 }
 

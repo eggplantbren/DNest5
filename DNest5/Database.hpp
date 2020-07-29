@@ -63,26 +63,22 @@ void Database::create_tables()
              lambda                 REAL NOT NULL,\
              beta                   REAL NOT NULL,\
              max_num_saves          INTEGER NOT NULL,\
-             rng_seed               INTEGER NOT NULL);";
+             rng_seed               INTEGER NOT NULL UNIQUE);";
 
     db << "CREATE TABLE IF NOT EXISTS particles\
             (id      INTEGER NOT NULL PRIMARY KEY,\
-             sampler INTEGER,\
+             sampler INTEGER NOT NULL,\
+             params  BLOB,\
              logl    REAL NOT NULL,\
              tb      REAL NOT NULL,\
-             params  BLOB,\
+             level   INTEGER NOT NULL,\
              FOREIGN KEY (sampler) REFERENCES samplers (id));";
-
-    // Insert the zero particle
-    db << "INSERT INTO particles VALUES (0, null, ?, 0.0, null)\
-            ON CONFLICT (id) DO NOTHING;"
-       << minus_infinity;
 }
 
 void Database::clear_previous()
 {
     db << "DELETE FROM samplers;";
-    db << "DELETE FROM particles WHERE id != 0;";
+    db << "DELETE FROM particles;";
 }
 
 } // namespace
