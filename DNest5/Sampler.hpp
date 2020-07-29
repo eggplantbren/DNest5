@@ -298,8 +298,8 @@ void Sampler<T>::metropolis_step_level(int k)
     // Beta part
     if(!levels.get_push_is_active())
     {
-        loga += options.beta*(log(levels.get_tries(level))
-                                    - log(levels.get_tries(level_prop)));
+        loga += options.beta*(log(1 + levels.get_tries(level))
+                                    - log(1 + levels.get_tries(level_prop)));
     }
 
     // Accept
