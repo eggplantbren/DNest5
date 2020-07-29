@@ -291,8 +291,16 @@ void Sampler<T>::metropolis_step_level(int k)
     // Acceptance probability
     double loga = levels.get_log_push(level_prop) - levels.get_log_push(level);
 
+    // Logx part for downward moves
     if(level_prop < level)
         loga += levels.get_logx(level) - levels.get_logx(level_prop);
+
+    // Beta part
+    if(!levels.get_push_is_active())
+    {
+        loga += options.beta*(log(levels.get_tries(level))
+                                    - log(levels.get_tries(level_prop)));
+    }
 
     // Accept
     if(rng.rand() <= exp(loga))

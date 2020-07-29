@@ -61,6 +61,7 @@ class Levels
         unsigned long long get_visits(int level) const { return visits[level]; }
         unsigned long long get_accepts(int level) const { return accepts[level]; }
         unsigned long long get_tries(int level) const { return tries[level]; }
+        bool get_push_is_active() const { return push_is_active; }
 };
 
 /* IMPLEMENTATIONS FOLLOW */
