@@ -190,9 +190,13 @@ void Sampler<T>::save_levels()
     for(int i=0; i<num_levels; ++i)
     {
         const auto& [logl, tb] = levels.get_pair(i);
-        db << "INSERT INTO levels (sampler, level, logx, logl, tb)\
-                VALUES (?, ?, ?, ?, ?);"
-           << sampler_id << i << levels.get_logx(i) << logl << tb;
+        db << "INSERT INTO levels\
+                (sampler, level, logx, logl, tb,\
+                 visits, exceeds, tries, accepts)\
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);"
+           << sampler_id << i << levels.get_logx(i) << logl << tb
+           << levels.get_visits(i) << levels.get_exceeds(i)
+           << levels.get_tries(i)  << levels.get_accepts(i);
     }
 }
 

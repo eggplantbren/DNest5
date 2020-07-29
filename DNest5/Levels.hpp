@@ -24,6 +24,10 @@ class Levels
         std::vector<Pair> pairs;
         std::vector<double> log_push;
 
+        // Statistics
+        std::vector<unsigned long long> visits, exceeds;
+        std::vector<unsigned long long> tries, accepts;
+
         // Stash of (logl_tb) pairs for new level creation
         std::vector<Pair> stash;
 
@@ -40,10 +44,13 @@ class Levels
 
         // Various getters
         int get_num_levels() const { return int(logxs.size()); }
-        const Pair& get_pair(int level) const { return pairs[level]; }
         double get_logx(int level) const { return logxs[level]; }
+        const Pair& get_pair(int level) const { return pairs[level]; }
         double get_log_push(int level) const { return log_push[level]; }
-
+        unsigned long long get_visits(int level) const { return visits[level]; }
+        unsigned long long get_exceeds(int level) const { return exceeds[level]; }
+        unsigned long long get_tries(int level) const { return tries[level]; }
+        unsigned long long get_accepts(int level) const { return accepts[level]; }
 };
 
 /* IMPLEMENTATIONS FOLLOW */
@@ -53,6 +60,8 @@ Levels::Levels(const Options& _options)
 ,logxs{0.0}
 ,pairs{{minus_infinity, 0.0}}
 ,log_push{0.0}
+,visits{0}, exceeds{0}
+,tries{0},  accepts{0}
 {
     // Reserve some RAM
     if(options.max_num_levels.has_value())
@@ -60,6 +69,10 @@ Levels::Levels(const Options& _options)
         logxs.reserve(*options.max_num_levels);
         pairs.reserve(*options.max_num_levels);
         log_push.reserve(*options.max_num_levels);
+        visits.reserve(*options.max_num_levels);
+        exceeds.reserve(*options.max_num_levels);
+        tries.reserve(*options.max_num_levels);
+        accepts.reserve(*options.max_num_levels);
     }
     stash.reserve(int(1.5*options.new_level_interval));
 }
@@ -97,10 +110,14 @@ void Levels::create_level()
     int idx = int(0.6321206*stash.size());
     logxs.push_back(logxs.back() - 1.0);
     pairs.push_back(stash[idx]);
+    visits.push_back(0);
+    exceeds.push_back(0);
+    tries.push_back(0);
+    accepts.push_back(0);
+    log_push.push_back(0.0);
     stash.clear();
 
-    // Extend and recompute log_push
-    log_push.push_back(0.0);
+    // Recompute log_push
     bool push = !options.max_num_levels.has_value()
                       || int(logxs.size()) < *options.max_num_levels;
     for(int i=0; i<int(logxs.size()); ++i)

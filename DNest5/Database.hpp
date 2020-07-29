@@ -83,6 +83,10 @@ void Database::create_tables()
              logx    REAL NOT NULL,\
              logl    REAL NOT NULL,\
              tb      REAL NOT NULL,\
+             visits  INTEGER NOT NULL DEFAULT 0,\
+             exceeds INTEGER NOT NULL DEFAULT 0,\
+             tries   INTEGER NOT NULL DEFAULT 0,\
+             accepts INTEGER NOT NULL DEFAULT 0,\
              PRIMARY KEY (sampler, level),\
              FOREIGN KEY (sampler) REFERENCES samplers (id));";
     // TODO: Consider WITHOUT_ROWID;
