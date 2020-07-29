@@ -120,7 +120,6 @@ Sampler<T>::Sampler(Options _options)
         double logl = t.log_likelihood();
         double tb = rng.rand();
         particles.emplace_back(std::move(t), logl, tb, level);
-        save_particle(i, true);
     }
     std::cout << "done." << std::endl;
 
