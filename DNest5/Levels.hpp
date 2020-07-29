@@ -45,6 +45,9 @@ class Levels
         template<typename T>
         void record_stats(const Particle<T>& particle, bool accepted);
 
+        // Revise logxs
+        void revise();
+
         // Various getters
         int get_num_levels() const { return int(logxs.size()); }
         double get_logx(int level) const { return logxs[level]; }
@@ -133,9 +136,21 @@ void Levels::create_level()
         log_push[i] = 0.0;
     }
 
-    /* Eventually recompute logx values based on observed visits */
     std::cout << "Created level " << logxs.size() << " with logl = ";
     std::cout << std::get<0>(pairs.back()) << "." << std::endl;
+}
+
+void Levels::revise()
+{
+    for(int i=1; i<int(logxs.size()); ++i)
+    {
+        double e = exceeds[i-1];
+        double v = visits[i-1];
+
+        double numerator   = e + exp(-1.0)*options.new_level_interval;
+        double denominator = v + options.new_level_interval;
+        logxs[i] = logxs[i-1] + log(numerator/denominator);
+    }
 }
 
 // Record stats

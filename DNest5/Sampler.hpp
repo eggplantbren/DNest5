@@ -161,9 +161,10 @@ void Sampler<T>::explore()
         if(work % options.metadata_save_interval == 0)
             save_particle(k, full_save);
 
-        // Break out of the loop after saving the levels
         if(full_save || level_created)
         {
+            // Do some bookkeeping and then break out of the loop
+            levels.revise();
             save_levels();
             break;
         }
