@@ -68,17 +68,28 @@ void Database::create_tables()
     db << "CREATE TABLE IF NOT EXISTS particles\
             (id      INTEGER NOT NULL PRIMARY KEY,\
              sampler INTEGER NOT NULL,\
+             level   INTEGER NOT NULL,\
              params  BLOB,\
              logl    REAL NOT NULL,\
              tb      REAL NOT NULL,\
+             FOREIGN KEY (sampler) REFERENCES samplers (id),\
+             FOREIGN KEY (sampler, level) REFERENCES levels (sampler, level));";
+
+    db << "CREATE TABLE IF NOT EXISTS levels\
+            (sampler INTEGER NOT NULL,\
              level   INTEGER NOT NULL,\
+             logl    REAL NOT NULL,\
+             tb      REAL NOT NULL,\
+             PRIMARY KEY (sampler, level),\
              FOREIGN KEY (sampler) REFERENCES samplers (id));";
+    // TODO: Consider WITHOUT_ROWID;
 }
 
 void Database::clear_previous()
 {
     db << "DELETE FROM samplers;";
     db << "DELETE FROM particles;";
+    db << "DELETE FROM levels;";
 }
 
 } // namespace

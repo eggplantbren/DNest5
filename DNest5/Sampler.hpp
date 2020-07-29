@@ -2,6 +2,7 @@
 #define DNest5_Sampler_hpp
 
 #include <DNest5/Database.hpp>
+#include <DNest5/Levels.hpp>
 #include <DNest5/Options.hpp>
 #include <DNest5/Particle.hpp>
 #include <DNest5/RNG.hpp>
@@ -31,6 +32,8 @@ class Sampler
         // The particles
         std::vector<Particle<T>> particles;
 
+        // The levels
+        Levels levels;
 
     public:
 
@@ -44,6 +47,7 @@ class Sampler
 template<typename T>
 Sampler<T>::Sampler(Options _options)
 :options(_options)
+,levels(options.new_level_interval, options.max_num_levels)
 {
     // Shorthand to database connection
     auto& db = database.db;
@@ -85,19 +89,29 @@ Sampler<T>::Sampler(Options _options)
        << options.lambda << options.beta << options.max_num_saves
        << options.rng_seed;
 
+    // Save level info to the database
+    int level = 0;
+    for(const auto& l: levels.get_logl_tb_pairs())
+    {
+        const auto& [logl, tb] = l;
+        db << "INSERT INTO levels (sampler, level, logl, tb)\
+                VALUES (?, ?, ?, ?);"
+           << sampler_id << level++ << logl << tb;
+    }
+
     // Generate initial particles
     std::cout << "    Generating " << options.num_particles << " particles ";
     std::cout << "from the prior..." << std::flush;
     particles.reserve(options.num_particles);
     for(int i=0; i<options.num_particles; ++i)
     {
+        int level = 0;
         T t(rng);
         double logl = t.log_likelihood();
         double tb = rng.rand();
-        int level = 0;
-        db << "INSERT INTO particles (sampler, params, logl, tb, level)\
+        db << "INSERT INTO particles (sampler, level, params, logl, tb)\
                 VALUES (?, ?, ?, ?, ?);"
-           << sampler_id << t.to_blob() << logl << tb << level;
+           << sampler_id << level << t.to_blob() << logl << tb;
         particles.emplace_back(std::move(t), logl, tb, level);
     }
     std::cout << "done." << std::endl;

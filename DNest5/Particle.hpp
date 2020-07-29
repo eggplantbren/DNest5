@@ -10,13 +10,15 @@ namespace DNest5
 template<typename T>
 using Particle = std::tuple<T, double, double, int>;
 
-// One can extract the last two elements only
+// A pair
+using Pair = std::tuple<double, double>;
+
+// One can extract the last two elements only, yielding a Pair
 template<typename T>
-std::tuple<double, double> logl_tb(const Particle<T>& particle);
+Pair logl_tb(const Particle<T>& particle);
 
 // One can order (logl, tb) pairs
-bool operator < (const std::tuple<double, double>& logl_tb1,
-                 const std::tuple<double, double>& logl_tb2);
+bool operator < (const Pair& logl_tb1, const Pair& logl_tb2);
 
 // One can order particles (by extracting the logl, tb pairs)
 template<typename T>
@@ -27,14 +29,13 @@ bool operator < (const Particle<T>& x, const Particle<T>& y);
 /* IMPLEMENTATIONS FOLLOW */
 
 template<typename T>
-std::tuple<double, double> logl_tb(const Particle<T>& particle)
+Pair logl_tb(const Particle<T>& particle)
 {
     const auto& [t, logl, tb, level] = particle;
     return {logl, tb};
 }
 
-bool operator < (const std::tuple<double, double>& logl_tb1,
-                 const std::tuple<double, double>& logl_tb2)
+bool operator < (const Pair& logl_tb1, const Pair& logl_tb2)
 {
     // Unpack
     const auto& [logl1, tb1] = logl_tb1;
