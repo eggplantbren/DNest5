@@ -40,7 +40,7 @@ class Sampler
 
         // Do a Metropolis step of particle k, or of its level
         bool metropolis_step(int k);
-        bool metropolis_step_level(int k);
+        void metropolis_step_level(int k);
 
         // Save levels or particles
         void save_levels();
@@ -233,6 +233,10 @@ bool Sampler<T>::metropolis_step(int k)
     // Return value
     bool accepted = false;
 
+    bool level_first = rng.rand() <= 0.5;
+    if(level_first)
+        metropolis_step_level(k);
+
     // Unpack the particle and create a copy for the proposal
     auto& particle = particles[k];
     auto proposal = particle;
@@ -254,32 +258,37 @@ bool Sampler<T>::metropolis_step(int k)
         }
     }
 
-    // Now propose a change to the level
-    proposal = particle;
-    int mag  = 1.0 + int(std::abs(rng.randc()));
-    int sign = (rng.rand() <= 0.5)?(-1):(1);
-    level_prop += mag*sign;
-    level_prop = level_prop % levels.get_num_levels();
-    if(level_prop < 0) // Handle C++ unusual %
-        level_prop += levels.get_num_levels();
-
-    // Acceptance criterion when moving up
-    double loga = 0.0;
-    if(level_prop >= level && levels.get_pair(level_prop) < Pair{logl, tb})
-        loga = 0.0;
-    else // When moving down
-    {
-        // logx part
-        loga = levels.get_logx(level) - levels.get_logx(level_prop);
-
-        // Log push part
-        int num_levels = levels.get_num_levels();
-        loga += levels.get_log_push(level_prop) - levels.get_log_push(level);
-    }
-    if(rng.rand() <= exp(loga))
-        level = level_prop;
+    if(!level_first)
+        metropolis_step_level(k);
 
     return accepted;
+}
+
+
+template<typename T>
+void Sampler<T>::metropolis_step_level(int k)
+{
+    // Unpack the particle and create a copy for the proposal
+    auto& particle = particles[k];
+    auto& [t, logl, tb, level] = particle;
+
+    int mag  = 1 + int(std::abs(rng.randc()));
+    int sign = (rng.rand() <= 0.5)?(-1):(1);
+    int level_prop = level + mag*sign;
+    if(level_prop < 0
+            || level_prop >= levels.get_num_levels()
+            || Pair{logl, tb} < levels.get_pair(level_prop))
+        return;
+
+    // Acceptance probability
+    double loga = levels.get_log_push(level_prop) - levels.get_log_push(level);
+
+    if(level_prop < level)
+        loga += levels.get_logx(level) - levels.get_logx(level_prop);
+
+    // Accept
+    if(rng.rand() <= exp(loga))
+        level = level_prop;
 }
 
 } // namespace

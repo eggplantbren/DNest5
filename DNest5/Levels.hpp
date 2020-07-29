@@ -39,8 +39,8 @@ class Levels
         bool add_to_stash(Pair&& pair);
 
         // Various getters
-        const Pair& get_pair(int level) const { return pairs[level]; }
         int get_num_levels() const { return int(logxs.size()); }
+        const Pair& get_pair(int level) const { return pairs[level]; }
         double get_logx(int level) const { return logxs[level]; }
         double get_log_push(int level) const { return log_push[level]; }
 
@@ -75,8 +75,12 @@ bool Levels::add_to_stash(Pair&& pair)
         return false;
     }
 
-    // Put the pair in the stash
-    stash.emplace_back(pair);
+    if(pairs.back() < pair)
+    {
+        // Put the pair in the stash
+        stash.emplace_back(pair);
+    }
+
     if(int(stash.size()) >= options.new_level_interval)
     {
         create_level();
@@ -98,7 +102,7 @@ void Levels::create_level()
     // Extend and recompute log_push
     log_push.push_back(0.0);
     bool push = !options.max_num_levels.has_value()
-                    || int(logxs.size()) < *options.max_num_levels;
+                      || int(logxs.size()) < *options.max_num_levels;
     for(int i=0; i<int(logxs.size()); ++i)
     {
         if(push)
@@ -107,11 +111,10 @@ void Levels::create_level()
             log_push[i] = -log(1.0 + pow(dist/options.lambda, 2));
         }
         else
-            log_push[i] = 0.0;
+        log_push[i] = 0.0;
     }
 
     /* Eventually recompute logx values based on observed visits */
-
     std::cout << "Created level " << logxs.size() << " with logl = ";
     std::cout << std::get<0>(pairs.back()) << "." << std::endl;
 }
