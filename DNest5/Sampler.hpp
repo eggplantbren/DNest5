@@ -152,8 +152,6 @@ void Sampler<T>::explore()
 
         // Add to stash
         bool level_created = levels.add_to_stash(logl_tb(particles[k]));
-        if(level_created)
-            save_levels();
 
         // Increment work
         ++work;
@@ -163,9 +161,12 @@ void Sampler<T>::explore()
         if(work % options.metadata_save_interval == 0)
             save_particle(k, full_save);
 
-        // Break out of the loop
+        // Break out of the loop after saving the levels
         if(full_save || level_created)
+        {
+            save_levels();
             break;
+        }
     }
     db << "COMMIT;";
 
@@ -192,11 +193,11 @@ void Sampler<T>::save_levels()
         const auto& [logl, tb] = levels.get_pair(i);
         db << "INSERT INTO levels\
                 (sampler, level, logx, logl, tb,\
-                 visits, exceeds, tries, accepts)\
+                 exceeds, visits, accepts, tries)\
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);"
            << sampler_id << i << levels.get_logx(i) << logl << tb
-           << levels.get_visits(i) << levels.get_exceeds(i)
-           << levels.get_tries(i)  << levels.get_accepts(i);
+           << levels.get_exceeds(i) << levels.get_visits(i)
+           << levels.get_accepts(i) << levels.get_tries(i);
     }
 }
 
@@ -261,6 +262,9 @@ bool Sampler<T>::metropolis_step(int k)
             particle = proposal;
         }
     }
+
+    // Record stats
+    levels.record_stats(particle, accepted);
 
     if(!level_first)
         metropolis_step_level(k);
