@@ -17,6 +17,8 @@ class Database
         sqlite::database db;
         void pragmas();
         void create_tables();
+        void create_indexes();
+        void create_views();
         void clear_previous();
 
     public:
@@ -40,6 +42,8 @@ Database::Database()
     pragmas();
     db << "BEGIN;";
     create_tables();
+    create_indexes();
+    create_views();
     db << "COMMIT;";
 }
 
@@ -92,7 +96,26 @@ void Database::create_tables()
              tries   INTEGER NOT NULL DEFAULT 0,\
              PRIMARY KEY (sampler, level),\
              FOREIGN KEY (sampler) REFERENCES samplers (id));";
-    // TODO: Consider WITHOUT_ROWID;
+}
+
+void Database::create_indexes()
+{
+    db << "CREATE INDEX IF NOT EXISTS particle_logl_tb_idx\
+            ON particles (logl, tb);";
+
+    db << "CREATE INDEX IF NOT EXISTS level_logl_tb_idx\
+            ON levels (logl, tb);";
+}
+
+void Database::create_views()
+{
+    db << "CREATE VIEW IF NOT EXISTS levels_leq_particles AS\
+            SELECT p.id particle,\
+                   (SELECT level FROM levels l\
+                        WHERE (l.logl, l.tb) <= (p.logl, p.tb)\
+                        ORDER BY l.logl DESC, l.tb DESC\
+                        LIMIT 1) AS level\
+            FROM particles p;";
 }
 
 void Database::clear_previous()
