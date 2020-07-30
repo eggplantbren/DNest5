@@ -178,14 +178,17 @@ void Levels::record_stats(const Particle<T>& particle, bool accepted)
 {
     const auto& [t, logl, tb, level] = particle;
 
-    // If one more level exists
-    if(level < int(logxs.size()) - 1)
+    // Exceeds and visits
+    for(int i=level; i<(int(logxs.size()) - 1); ++i)
     {
-        if(pairs[level+1] < Pair{logl, tb})
-            ++exceeds[level];
-        ++visits[level];
+        ++visits[i];
+        if(pairs[i+1] < Pair{logl, tb})
+            ++exceeds[i];
+        else
+            break;
     }
 
+    // Accepts and tries
     if(accepted)
         ++accepts[level];
     ++tries[level];
