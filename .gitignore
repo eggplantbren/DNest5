@@ -4,3 +4,4 @@ dnest5.db
 main
 Makefile
 __pycache__
+.test_accuracy_output.csv

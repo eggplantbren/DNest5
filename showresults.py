@@ -53,7 +53,7 @@ def figure_2(db):
     plt.gcf().align_ylabels()
 
 
-def particle_logms(db):
+def postprocess(db):
     """
     Estimate particle log-prior-passes
     """
@@ -106,7 +106,7 @@ if __name__ == "__main__":
     conn = apsw.Connection(".db/dnest5.db", flags=apsw.SQLITE_OPEN_READONLY)
     db = conn.cursor()
 
-    results = particle_logms(db)
+    results = postprocess(db)
     print(results)
 
     figure_1(db)
