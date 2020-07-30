@@ -33,7 +33,7 @@ def figure_2(db):
         level, logx, accepts, tries = row
         levels.append(level)
         logxs.append(logx)
-        acceptance_rates.append(accepts/tries)
+        acceptance_rates.append((accepts+0.5)/(tries+1))
 
     plt.figure()
     plt.subplot(2, 1, 1)
