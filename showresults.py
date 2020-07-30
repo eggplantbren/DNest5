@@ -76,24 +76,23 @@ def particle_logms(db):
 
     # Compute the logms
     particles = dict()
-    for row in db.execute("SELECT p.id, llp.level FROM particles p INNER JOIN\
+    for row in db.execute("SELECT p.id, llp.level, p.logl FROM particles p INNER JOIN\
                             levels_leq_particles llp ON p.id=llp.particle;"):
-        particle_id, level = row
+        particle_id, level, logl = row
         particles[particle_id] = dict()
         particles[particle_id]["logm"] = logms[level]\
                                             - np.log(num_particles[level])
+        particles[particle_id]["logl"] = logl
 
     # Now compute logxs as well
     # X_{i+1} = X_i - m_i
     # logX_{i+1} = log(exp(logX_i) - exp(logm_i))
-    logx = 0.0
-    for row in db.execute("SELECT id, logl FROM particles ORDER BY logl, tb;"):
-        particle_id, logl = row
+#    logx = 0.0
+#    for row in db.execute("SELECT id, logl FROM particles ORDER BY logl, tb;"):
+#        particle_id, logl = row
 #        print(logx, particles[particle_id]["logm"])
 #        logx = logdiffexp(logx, particles[particle_id]["logm"])
 ##        particles[particle_id]["logx"] = logx
-        particles[particle_id]["logl"] = logl
-
 #    plt.plot([particles[p]["logm"] for p in particles])
 #    print(logsumexp([particles[p]["logm"] for p in particles]))
 #    plt.show()
