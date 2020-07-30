@@ -1,5 +1,6 @@
 .build/*
 .db/*
+dnest5.db
 main
 Makefile
 __pycache__
