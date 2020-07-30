@@ -19,6 +19,7 @@ class Options
     private:
 
         int num_particles;
+        int num_threads;
         int new_level_interval;
         int save_interval;
         int metadata_save_interval;
@@ -33,6 +34,7 @@ class Options
 
         // Constructor that specifies everything (or, use the defaults)
         Options(int _num_particles = 5,
+                int _num_threads = 5,
                 int _new_level_interval = 10000,
                 int _save_interval = 1000,
                 int _metadata_save_interval = 1000,
@@ -61,6 +63,7 @@ class Options
 /* Implementations follow */
 
 Options::Options(int _num_particles,
+                 int _num_threads,
                  int _new_level_interval,
                  int _save_interval,
                  int _metadata_save_interval,
@@ -71,6 +74,7 @@ Options::Options(int _num_particles,
                  std::optional<int> _rng_seed,
                  bool _clear_previous)
 :num_particles(_num_particles)
+,num_threads(_num_threads)
 ,new_level_interval(_new_level_interval)
 ,save_interval(_save_interval)
 ,metadata_save_interval(_metadata_save_interval)
@@ -83,6 +87,7 @@ Options::Options(int _num_particles,
 {
     std::cout << std::setprecision(stdout_precision);
     assert(save_interval % metadata_save_interval == 0);
+    assert(num_particles % num_threads == 0);
 }
 
 Options::Options(const char* yaml_file)
