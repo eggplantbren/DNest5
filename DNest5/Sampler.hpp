@@ -26,8 +26,8 @@ class Sampler
         // A set of options
         Options options;
 
-        // The random number generator
-        RNG rng;
+        // The random number generators
+        std::vector<RNG> rngs;
 
         // The particles
         std::vector<Particle<T>> particles;
@@ -87,24 +87,38 @@ Sampler<T>::Sampler(Options _options)
         };
     std::cout << "    Sampler ID = " << sampler_id << "." << std::endl;
 
-    // Make sure the RNG seed is unused. Choose a new one if necessary.
-    int count;
-    do
-    {
-        db << "SELECT COUNT(*) FROM samplers WHERE rng_seed = ?;"
-           << options.rng_seed >> count;
-        if(count != 0)
-            options.rng_seed -= Options::rng_seed_gap;
-    }while(count != 0);
-    std::cout << "    RNG seed = " << options.rng_seed << "." << std::endl;
-
     // Save sampler info to the database
     db << "INSERT INTO samplers\
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);"
-       << sampler_id << options.new_level_interval << options.save_interval
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"
+       << sampler_id << options.num_particles << options.num_threads
+       << options.new_level_interval << options.save_interval
        << options.metadata_save_interval << options.max_num_levels
-       << options.lambda << options.beta << options.max_num_saves
-       << options.rng_seed;
+       << options.lambda << options.beta << options.max_num_saves;
+
+    // Starting with the hint given in Options, generate all the actual RNG
+    // seeds.
+    rngs.reserve(options.num_threads);
+    int count;
+    int seed = options.rng_seed;
+    std::cout << "    RNG seeds = (";
+    do
+    {
+        db << "SELECT COUNT(*) FROM rngs WHERE seed = ?;"
+           << seed >> count;
+        if(count == 0)
+        {
+            rngs.emplace_back(RNG());
+            rngs.back().set_seed(seed);
+            db << "INSERT INTO rngs VALUES (?, ?);" << seed << sampler_id;
+            std::cout << seed;
+            if(int(rngs.size()) < options.num_threads-1)
+                std::cout << ", ";
+            else
+                std::cout << ")." << std::endl;
+            seed -= Options::rng_seed_gap;
+        }
+    }while(int(rngs.size()) < options.num_threads);
+
 
     // Save level info to the database
     save_levels();
@@ -113,6 +127,7 @@ Sampler<T>::Sampler(Options _options)
     std::cout << "    Generating " << options.num_particles << " particles ";
     std::cout << "from the prior..." << std::flush;
     particles.reserve(options.num_particles);
+    auto& rng = rngs[0];
     for(int i=0; i<options.num_particles; ++i)
     {
         int level = 0;
@@ -137,6 +152,9 @@ template<typename T>
 void Sampler<T>::explore()
 {
     std::cout << "Exploring." << std::endl;
+
+    // Temporary
+    auto& rng = rngs[0];
 
     // Local handy alias
     auto& db = database.db;
@@ -238,6 +256,9 @@ bool Sampler<T>::metropolis_step(int k)
     // Return value
     bool accepted = false;
 
+    // Temporary
+    auto& rng = rngs[0];
+
     bool level_first = rng.rand() <= 0.5;
     if(level_first)
         metropolis_step_level(k);
@@ -276,6 +297,9 @@ bool Sampler<T>::metropolis_step(int k)
 template<typename T>
 void Sampler<T>::metropolis_step_level(int k)
 {
+    // Temporary
+    auto& rng = rngs[0];
+
     // Unpack the particle and create a copy for the proposal
     auto& particle = particles[k];
     auto& [t, logl, tb, level] = particle;

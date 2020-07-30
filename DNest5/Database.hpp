@@ -65,14 +65,20 @@ void Database::create_tables()
 {
     db << "CREATE TABLE IF NOT EXISTS samplers\
             (id                     INTEGER NOT NULL PRIMARY KEY,\
+             num_particles          INTEGER NOT NULL,\
+             num_threads            INTEGER NOT NULL,\
              new_level_interval     INTEGER NOT NULL,\
              save_interval          INTEGER NOT NULL,\
              metadata_save_interval INTEGER NOT NULL,\
              max_num_levels         INTEGER,\
              lambda                 REAL NOT NULL,\
              beta                   REAL NOT NULL,\
-             max_num_saves          INTEGER NOT NULL,\
-             rng_seed               INTEGER NOT NULL UNIQUE);";
+             max_num_saves          INTEGER NOT NULL);";
+
+    db << "CREATE TABLE IF NOT EXISTS rngs\
+            (seed    INTEGER NOT NULL PRIMARY KEY,\
+             sampler INTEGER NOT NULL,\
+             FOREIGN KEY (sampler) REFERENCES samplers (id));";
 
     db << "CREATE TABLE IF NOT EXISTS particles\
             (id      INTEGER NOT NULL PRIMARY KEY,\
