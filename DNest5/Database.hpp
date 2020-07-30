@@ -116,6 +116,11 @@ void Database::create_views()
                         ORDER BY l.logl DESC, l.tb DESC\
                         LIMIT 1) AS level\
             FROM particles p;";
+
+    db << "CREATE VIEW IF NOT EXISTS particles_per_level AS\
+            SELECT level, COUNT(*) num_particles\
+            FROM levels_leq_particles\
+            GROUP BY level;";
 }
 
 void Database::clear_previous()
