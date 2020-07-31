@@ -6,6 +6,8 @@
 #include <DNest5/Options.hpp>
 #include <DNest5/Particle.hpp>
 #include <DNest5/RNG.hpp>
+#include <mutex>
+#include <thread>
 #include <vector>
 
 namespace DNest5
@@ -38,6 +40,9 @@ class Sampler
         // Count work
         unsigned long long work;
 
+        // Mutexes
+        static std::mutex levels_mutex, database_mutex;
+
         // Do a Metropolis step of particle k, or of its level
         bool metropolis_step(int k);
         void metropolis_step_level(int k);
@@ -47,7 +52,7 @@ class Sampler
         void save_particle(int k, bool with_params);
 
         // Explore until a new level or save occurs.
-        void explore();
+        void explore(int thread);
 
     public:
 
@@ -59,6 +64,13 @@ class Sampler
 };
 
 /* IMPLEMENTATIONS FOLLOW */
+
+template<typename T>
+std::mutex Sampler<T>::levels_mutex;
+
+template<typename T>
+std::mutex Sampler<T>::database_mutex;
+
 
 template<typename T>
 Sampler<T>::Sampler(Options _options)
@@ -145,55 +157,69 @@ template<typename T>
 void Sampler<T>::run()
 {
     while(database.num_full_particles(sampler_id) < options.max_num_saves)
-        explore();
+    {
+        std::cout << "Exploring." << std::endl;
+
+        auto& db = database.db;
+        db << "BEGIN;";
+        std::vector<std::thread> threads;
+        for(int thread=0; thread<options.num_threads; ++thread)
+        {
+            auto func = std::bind(&Sampler<T>::explore, this, thread);
+            threads.emplace_back(func);
+        }
+        for(auto& thread: threads)
+            thread.join();
+
+        // Save one full particle
+        save_particle(rngs[0].rand_int(options.num_particles), true);
+
+        // Level work
+        levels.revise();
+        save_levels();
+        db << "COMMIT;";
+
+        work += options.save_interval;
+        std::cout << "Work done = ";
+        std::cout << std::scientific << std::setprecision(3);
+        std::cout << double(work) << "." << std::endl;
+        std::cout << std::defaultfloat;
+        std::cout << std::setprecision(options.stdout_precision);
+        std::cout << std::endl;
+    }
 }
 
 template<typename T>
-void Sampler<T>::explore()
+void Sampler<T>::explore(int thread)
 {
-    std::cout << "Exploring." << std::endl;
-
     // Temporary
-    auto& rng = rngs[0];
+    auto& rng = rngs[thread];
 
-    // Local handy alias
-    auto& db = database.db;
-    db << "BEGIN;";
-    while(true)
+    int k;
+    int steps = options.save_interval/options.num_threads;
+    for(int i=0; i<steps; ++i)
     {
         // Choose a particle
-        int k = rng.rand_int(options.num_particles);
+        k = thread*(options.num_particles/options.num_threads)
+               + rng.rand_int(options.num_particles/options.num_threads);
 
         // Do a Metropolis step
         metropolis_step(k);
 
         // Add to stash
+        levels_mutex.lock();
         bool level_created = levels.add_to_stash(logl_tb(particles[k]));
+        levels_mutex.unlock();
 
-        // Increment work
-        ++work;
-
-        // Save a particle
-        bool full_save = work % options.save_interval == 0;
-        if(work % options.metadata_save_interval == 0)
-            save_particle(k, full_save);
-
-        if(full_save || level_created)
+        // Save a particle (metadata only)
+        if((i+1) % options.metadata_save_interval == 0 &&
+            i != (steps-1))
         {
-            // Do some bookkeeping and then break out of the loop
-            levels.revise();
-            save_levels();
-            break;
+            database_mutex.lock();
+            save_particle(k, false);
+            database_mutex.unlock();
         }
     }
-    db << "COMMIT;";
-
-    std::cout << "Work done = ";
-    std::cout << std::scientific << std::setprecision(3);
-    std::cout << double(work) << "." << std::endl;
-    std::cout << std::defaultfloat;
-    std::cout << std::setprecision(options.stdout_precision);
-    std::cout << std::endl;
 }
 
 template<typename T>
@@ -257,7 +283,8 @@ bool Sampler<T>::metropolis_step(int k)
     bool accepted = false;
 
     // Temporary
-    auto& rng = rngs[0];
+    int thread = k/options.num_threads;
+    auto& rng = rngs[thread];
 
     bool level_first = rng.rand() <= 0.5;
     if(level_first)
@@ -285,7 +312,9 @@ bool Sampler<T>::metropolis_step(int k)
     }
 
     // Record stats
+    levels_mutex.lock();
     levels.record_stats(particle, accepted);
+    levels_mutex.unlock();
 
     if(!level_first)
         metropolis_step_level(k);

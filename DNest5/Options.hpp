@@ -88,6 +88,7 @@ Options::Options(int _num_particles,
     std::cout << std::setprecision(stdout_precision);
     assert(save_interval % metadata_save_interval == 0);
     assert(num_particles % num_threads == 0);
+    assert(save_interval % num_threads == 0);
 }
 
 Options::Options(const char* yaml_file)
