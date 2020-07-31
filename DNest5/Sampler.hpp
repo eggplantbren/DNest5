@@ -45,14 +45,14 @@ class Sampler
         // Count work
         unsigned long long work;
         unsigned long long saved_particles, saved_full_particles;
+        bool done;
 
-        // A mutex and a barrier
-        static std::mutex levels_mutex;
-        static std::unique_ptr<Barrier> barrier;
+        // A barrier
+        std::unique_ptr<Barrier> barrier;
 
         // Do a Metropolis step of particle k, or of its level
-        bool metropolis_step(int k);
-        void metropolis_step_level(int k);
+        bool metropolis_step(int k, int thread);
+        void metropolis_step_level(int k, int thread);
 
         // Save levels or particles
         void save_levels();
@@ -75,19 +75,14 @@ class Sampler
 /* IMPLEMENTATIONS FOLLOW */
 
 template<typename T>
-std::unique_ptr<Barrier> Sampler<T>::barrier;
-
-template<typename T>
-std::mutex Sampler<T>::levels_mutex;
-
-template<typename T>
 Sampler<T>::Sampler(Options _options)
 :options(std::move(_options))
 ,levels(options)
-,levels_copies(options.num_threads, levels)
+,levels_copies(options.num_threads, options)
 ,work(0)
 ,saved_particles(0)
 ,saved_full_particles(0)
+,done(false)
 {
     // Shorthand to database connection
     auto& db = database.db;
@@ -142,7 +137,6 @@ Sampler<T>::Sampler(Options _options)
         }
     }while(int(rngs.size()) < options.num_threads);
 
-
     // Save level info to the database
     save_levels();
 
@@ -188,7 +182,7 @@ void Sampler<T>::run_thread(int thread)
 {
     auto& db = database.db;
 
-    while(saved_particles < options.max_num_saves)
+    while(true)
     {
         // Print a message and start DB transaction
         if(thread == 0)
@@ -197,13 +191,18 @@ void Sampler<T>::run_thread(int thread)
 
             // Copy levels
             for(int i=0; i<options.num_threads; ++i)
+            {
                 levels_copies[i] = levels;
+                levels_copies[i].clear_stash();
+            }
 
             db << "BEGIN;";
         }
 
-        // Do a bit of MCMC
+        // Do a bit of MCMC (or quit)
         barrier->wait();
+        if(done)
+            break;
         explore(thread);
         barrier->wait();
 
@@ -214,18 +213,14 @@ void Sampler<T>::run_thread(int thread)
             // Add to work done
             work += options.save_interval;
 
-            // Save all particles
-            for(int k=0; k<options.num_particles; ++k)
-            {
-                bool full = rngs[0].rand() <= options.thin;
-                ++saved_particles;
-                if(full)
-                    ++saved_full_particles;
-                save_particle(k, full);
-            }
-
-            // Add a new level if the stash is big enough
-            levels.create_level();
+            // Save one particle
+            int k = rngs[0].rand_int(options.num_particles);
+            bool full = rngs[0].rand() <= options.thin;
+            ++saved_particles;
+            if(full)
+                ++saved_full_particles;
+            save_particle(k, full);
+            done = saved_particles >= options.max_num_saves;
 
             // Merge level data
             auto backup = levels;
@@ -233,14 +228,15 @@ void Sampler<T>::run_thread(int thread)
             {
                 for(int j=0; j<levels_copies[i].get_num_levels(); ++j)
                 {
-                    levels.adjust
-                        (j,
-                         levels_copies[i].get_exceeds(j) - backup.get_exceeds(j),
-                         levels_copies[i].get_visits(j) - backup.get_visits(j),
-                         levels_copies[i].get_accepts(j) - backup.get_accepts(j),
-                         levels_copies[i].get_tries(j) - backup.get_tries(j));
+                    levels.adjust(j,
+                     levels_copies[i].get_exceeds(j) - backup.get_exceeds(j),
+                     levels_copies[i].get_visits(j) - backup.get_visits(j),
+                     levels_copies[i].get_accepts(j) - backup.get_accepts(j),
+                     levels_copies[i].get_tries(j) - backup.get_tries(j));
                 }
+                levels.import_stash_from(levels_copies[i]);
             }
+            levels.create_level();
 
             // Level work
             levels.revise();
@@ -255,6 +251,9 @@ void Sampler<T>::run_thread(int thread)
             std::cout << std::endl;
         }
     }
+
+    if(thread == 0)
+        db << "COMMIT;";
 }
 
 template<typename T>
@@ -264,19 +263,18 @@ void Sampler<T>::explore(int thread)
     auto& rng = rngs[thread];
 
     int k;
-    for(int i=0; i<options.save_interval; ++i)
+    int steps = options.save_interval/options.num_threads;
+    int particles_per_thread = options.num_particles/options.num_threads;
+    for(int i=0; i<steps; ++i)
     {
         // Choose a particle
-        k = thread*(options.num_particles/options.num_threads)
-               + rng.rand_int(options.num_particles/options.num_threads);
+        k = thread*particles_per_thread + rng.rand_int(particles_per_thread);
 
         // Do a Metropolis step
-        metropolis_step(k);
+        metropolis_step(k, thread);
 
         // Add to stash
-        levels_mutex.lock();
-        levels.add_to_stash(logl_tb(particles[k]));
-        levels_mutex.unlock();
+        levels_copies[thread].add_to_stash(logl_tb(particles[k]));
     }
 }
 
@@ -325,24 +323,23 @@ void Sampler<T>::save_particle(int k, bool with_params)
     // Stdout message
     std::cout << "Saved particle ";
     std::cout << saved_particles << " [" << saved_full_particles << " ";
-    std::cout << "full particles]." << "." << std::endl;
+    std::cout << "full particles]." << std::endl;
 }
 
 
 
 template<typename T>
-bool Sampler<T>::metropolis_step(int k)
+bool Sampler<T>::metropolis_step(int k, int thread)
 {
     // Return value
     bool accepted = false;
 
     // Access correct RNG
-    int thread = k/options.num_threads;
     auto& rng = rngs[thread];
 
     bool level_first = rng.rand() <= 0.5;
     if(level_first)
-        metropolis_step_level(k);
+        metropolis_step_level(k, thread);
 
     // Unpack the particle and create a copy for the proposal
     auto& particle = particles[k];
@@ -369,17 +366,16 @@ bool Sampler<T>::metropolis_step(int k)
     levels_copies[thread].record_stats(particle, accepted);
 
     if(!level_first)
-        metropolis_step_level(k);
+        metropolis_step_level(k, thread);
 
     return accepted;
 }
 
 
 template<typename T>
-void Sampler<T>::metropolis_step_level(int k)
+void Sampler<T>::metropolis_step_level(int k, int thread)
 {
     // Access correct RNG
-    int thread = k/options.num_threads;
     auto& rng = rngs[thread];
 
     // Unpack the particle and create a copy for the proposal

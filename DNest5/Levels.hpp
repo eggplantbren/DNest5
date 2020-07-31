@@ -52,6 +52,13 @@ class Levels
         // Adjust exceeds, visits, accepts, tries of the given level
         void adjust(int level, int e, int v, int a, int t);
 
+        // Clear the stash
+        void clear_stash();
+
+        // Import stash points. Assumes levels are the same and merely
+        // copies points over.
+        void import_stash_from(const Levels& other);
+
         // Recent change in level log likelihood
         double recent_logl_changes() const;
 
@@ -169,6 +176,17 @@ void Levels::revise()
         double denominator = v + options.new_level_interval;
         logxs[i] = logxs[i-1] + log(numerator/denominator);
     }
+}
+
+void Levels::clear_stash()
+{
+    stash.clear();
+}
+
+void Levels::import_stash_from(const Levels& other)
+{
+    for(const auto& point: other.stash)
+        stash.push_back(point);
 }
 
 void Levels::adjust(int level, int e, int v, int a, int t)
