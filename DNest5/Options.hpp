@@ -37,7 +37,7 @@ class Options
                 int _num_threads = 5,
                 int _new_level_interval = 10000,
                 int _save_interval = 1000,
-                int _metadata_save_interval = 1000,
+                int _metadata_save_interval = 100,
                 std::optional<int> max_num_levels = 100, //std::optional<int>(),
                 double _lambda = 10.0,
                 double _beta = 100.0,
