@@ -69,7 +69,7 @@ void Database::create_tables()
              num_threads            INTEGER NOT NULL,\
              new_level_interval     INTEGER NOT NULL,\
              save_interval          INTEGER NOT NULL,\
-             metadata_save_interval INTEGER NOT NULL,\
+             thin                   REAL NOT NULL,\
              max_num_levels         INTEGER,\
              lambda                 REAL NOT NULL,\
              beta                   REAL NOT NULL,\

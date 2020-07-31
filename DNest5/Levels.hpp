@@ -17,7 +17,7 @@ class Levels
     private:
 
         // A copy of the options being used
-        const Options& options;
+        Options options;
 
         // Parallel arrays
         std::vector<double> logxs;
@@ -31,16 +31,16 @@ class Levels
         // Stash of (logl_tb) pairs for new level creation
         std::vector<Pair> stash;
 
-        // Create a new level
-        void create_level();
-
     public:
 
         // Initialise, passing options
         Levels(const Options& _options);
 
         // Add to stash. Return value = whether a new level was created.
-        bool add_to_stash(Pair&& pair);
+        void add_to_stash(Pair&& pair);
+
+        // Create a new level - IF the stash is large enough for it.
+        void create_level();
 
         // Record stats
         template<typename T>
@@ -48,6 +48,9 @@ class Levels
 
         // Revise logxs
         void revise();
+
+        // Adjust exceeds, visits, accepts, tries of the given level
+        void adjust(int level, int e, int v, int a, int t);
 
         // Recent change in level log likelihood
         double recent_logl_changes() const;
@@ -88,7 +91,7 @@ Levels::Levels(const Options& _options)
     stash.reserve(int(1.5*options.new_level_interval));
 }
 
-bool Levels::add_to_stash(Pair&& pair)
+void Levels::add_to_stash(Pair&& pair)
 {
     // Bail if this is a cow's opinion
     if((options.max_num_levels.has_value()
@@ -97,7 +100,7 @@ bool Levels::add_to_stash(Pair&& pair)
     {
         if(stash.size() > 0)
             stash.clear();
-        return false;
+        return;
     }
 
     if(pairs.back() < pair)
@@ -105,18 +108,14 @@ bool Levels::add_to_stash(Pair&& pair)
         // Put the pair in the stash
         stash.emplace_back(pair);
     }
-
-    if(int(stash.size()) >= options.new_level_interval)
-    {
-        create_level();
-        return true;
-    }
-
-    return false;
 }
 
 void Levels::create_level()
 {
+    // Don't do anything if the stash is too small
+    if(int(stash.size()) < options.new_level_interval)
+        return;
+
     // Sort the stash and find the quantile
     std::sort(stash.begin(), stash.end());
     int idx = int(0.6321206*stash.size());
@@ -171,6 +170,17 @@ void Levels::revise()
         logxs[i] = logxs[i-1] + log(numerator/denominator);
     }
 }
+
+void Levels::adjust(int level, int e, int v, int a, int t)
+{
+    if(level >= int(logxs.size()))
+        return;
+    exceeds[level] += e;
+    visits[level] += v;
+    accepts[level] += a;
+    tries[level] += t;
+}
+
 
 // Record stats
 template<typename T>

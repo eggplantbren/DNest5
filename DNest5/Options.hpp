@@ -22,7 +22,7 @@ class Options
         int num_threads;
         int new_level_interval;
         int save_interval;
-        int metadata_save_interval;
+        double thin;
         std::optional<int> max_num_levels;
         double lambda;
         double beta;
@@ -37,11 +37,11 @@ class Options
                 int _num_threads = 5,
                 int _new_level_interval = 10000,
                 int _save_interval = 1000,
-                int _metadata_save_interval = 100,
+                double _thin = 0.1,
                 std::optional<int> max_num_levels = 100, //std::optional<int>(),
                 double _lambda = 10.0,
                 double _beta = 100.0,
-                int _max_num_saves = 10000,
+                int _max_num_saves = 100000,
                 std::optional<int> _rng_seed = std::optional<int>(),
                 bool _clear_previous = true);
 
@@ -66,7 +66,7 @@ Options::Options(int _num_particles,
                  int _num_threads,
                  int _new_level_interval,
                  int _save_interval,
-                 int _metadata_save_interval,
+                 double _thin,
                  std::optional<int> _max_num_levels,
                  double _lambda,
                  double _beta,
@@ -77,7 +77,7 @@ Options::Options(int _num_particles,
 ,num_threads(_num_threads)
 ,new_level_interval(_new_level_interval)
 ,save_interval(_save_interval)
-,metadata_save_interval(_metadata_save_interval)
+,thin(_thin)
 ,max_num_levels(_max_num_levels)
 ,lambda(_lambda)
 ,beta(_beta)
@@ -86,9 +86,9 @@ Options::Options(int _num_particles,
 ,clear_previous(_clear_previous)
 {
     std::cout << std::setprecision(stdout_precision);
-    assert(save_interval % metadata_save_interval == 0);
-    assert(num_particles % num_threads == 0);
     assert(save_interval % num_threads == 0);
+    assert(num_particles % num_threads == 0);
+    assert(max_num_saves % num_threads == 0);
 }
 
 Options::Options(const char* yaml_file)
