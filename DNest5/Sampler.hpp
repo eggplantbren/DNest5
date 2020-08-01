@@ -240,7 +240,7 @@ void Sampler<T>::run_thread(int thread)
 
             // Level work
             levels.revise();
-            if(created_level || (saved_particles % options.level_save_gap == 0))
+            if(created_level || (saved_full_particles % options.level_save_gap == 0))
                 save_levels();
             db << "COMMIT;";
 
