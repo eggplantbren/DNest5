@@ -37,11 +37,11 @@ class Options
                 int _num_threads = 5,
                 int _new_level_interval = 10000,
                 int _save_interval = 1000,
-                double _thin = 1.0,
+                double _thin = 0.1,
                 std::optional<int> max_num_levels = 100, //std::optional<int>(),
                 double _lambda = 10.0,
                 double _beta = 100.0,
-                int _max_num_saves = 10000,
+                int _max_num_saves = 100000,
                 std::optional<int> _rng_seed = std::optional<int>(),
                 bool _clear_previous = true);
 
