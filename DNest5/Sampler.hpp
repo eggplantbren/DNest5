@@ -236,11 +236,12 @@ void Sampler<T>::run_thread(int thread)
                 }
                 levels.import_stash_from(levels_copies[i]);
             }
-            levels.create_level();
+            bool created_level = levels.create_level();
 
             // Level work
             levels.revise();
-            save_levels();
+            if(created_level || (saved_particles % options.level_save_gap == 0))
+                save_levels();
             db << "COMMIT;";
 
             std::cout << "Work done = ";

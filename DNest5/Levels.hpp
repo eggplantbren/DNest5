@@ -40,7 +40,8 @@ class Levels
         void add_to_stash(Pair&& pair);
 
         // Create a new level - IF the stash is large enough for it.
-        void create_level();
+        // Return value is true if a level is actually created
+        bool create_level();
 
         // Record stats
         template<typename T>
@@ -117,11 +118,11 @@ void Levels::add_to_stash(Pair&& pair)
     }
 }
 
-void Levels::create_level()
+bool Levels::create_level()
 {
     // Don't do anything if the stash is too small
     if(int(stash.size()) < options.new_level_interval)
-        return;
+        return false;
 
     // Sort the stash and find the quantile
     std::sort(stash.begin(), stash.end());
@@ -163,6 +164,8 @@ void Levels::create_level()
 
     std::cout << "Created level " << logxs.size() << " with logl = ";
     std::cout << std::get<0>(pairs.back()) << "." << std::endl;
+
+    return true;
 }
 
 void Levels::revise()

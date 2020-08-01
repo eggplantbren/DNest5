@@ -52,6 +52,7 @@ class Options
         static constexpr auto db_filename = ".db/dnest5.db";
         static constexpr int stdout_precision = 12;
         static constexpr int rng_seed_gap = 123;
+        static constexpr int level_save_gap = 10;
 
         // Friends
         template<typename T>
