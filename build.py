@@ -47,7 +47,7 @@ FLAGS = -std=c++17
 INCLUDE = -I {HPP_DIR} -I .
 OPTIM = -O2 -g
 WARN = -Wall -Wextra -pedantic
-LINK = -lpthread -lsqlite3
+LINK = -lpthread -lsqlite3 -lyaml-cpp
 ALL = $(FLAGS) $(INCLUDE) $(WARN) $(OPTIM)\n\n""")
 
 makefile.write("default: main\n\n")

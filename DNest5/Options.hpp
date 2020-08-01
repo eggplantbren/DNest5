@@ -7,6 +7,7 @@
 #include <iomanip>
 #include <iostream>
 #include <optional>
+#include <yaml-cpp/yaml.h>
 
 namespace DNest5
 {
@@ -93,10 +94,41 @@ Options::Options(int _num_particles,
 }
 
 Options::Options(const char* yaml_file)
-:Options()
 {
-    std::cerr << "Not opening " << yaml_file << ": YAML Options files ";
-    std::cerr << "not implemented yet. Falling back to defaults." << std::endl;
+    // Load the file
+    YAML::Node file = YAML::LoadFile(yaml_file);
+
+    // Get all the nodes
+    num_particles = file["num_particles"].as<int>();
+    num_threads = file["num_threads"].as<int>();
+    new_level_interval = file["new_level_interval"].as<int>();
+    save_interval = file["save_interval"].as<int>();
+    thin = file["thin"].as<double>();
+    try
+    {
+        max_num_levels = file["max_num_levels"].as<int>();
+    }
+    catch(const YAML::TypedBadConversion<int>& e)
+    {
+        max_num_levels = std::optional<int>();
+    }
+    lambda = file["lambda"].as<double>();
+    beta = file["beta"].as<double>();
+    max_num_saves = file["max_num_saves"].as<int>();
+    try
+    {
+        rng_seed = file["rng_seed"].as<int>();
+    }
+    catch(const YAML::TypedBadConversion<int>& e)
+    {
+        // Use the time
+        rng_seed = time(0);
+    }
+    clear_previous = file["clear_previous"].as<bool>();
+
+    assert(save_interval % num_threads == 0);
+    assert(num_particles % num_threads == 0);
+    assert(max_num_saves % num_threads == 0);
 }
 
 } // namespace
