@@ -175,6 +175,11 @@ void Sampler<T>::run()
     // Join the threads
     for(auto& thread: threads)
         thread.join();
+
+    // Save levels one last time
+    database.db << "BEGIN;";
+    save_levels();
+    database.db << "COMMIT;";
 }
 
 template<typename T>
