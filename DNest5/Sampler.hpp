@@ -192,7 +192,8 @@ void Sampler<T>::run_thread(int thread)
         // Print a message and start DB transaction
         if(thread == 0)
         {
-            std::cout << "Exploring..." << std::flush;
+            std::cout << "Exploring ["
+                      << levels.get_num_levels() << " levels]..." << std::flush;
 
             // Copy levels
             for(int i=0; i<options.num_threads; ++i)
