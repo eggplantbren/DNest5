@@ -67,6 +67,7 @@ class Levels
         int get_num_levels() const { return int(logxs.size()); }
         double get_logx(int level) const { return logxs[level]; }
         const Pair& get_pair(int level) const { return pairs[level]; }
+        const Pair& get_top() const { return pairs.back(); }
         double get_log_push(int level) const { return log_push[level]; }
         unsigned long long get_exceeds(int level) const { return exceeds[level]; }
         unsigned long long get_visits(int level) const { return visits[level]; }
