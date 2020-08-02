@@ -66,7 +66,10 @@ def figure_3(particles):
     plt.ylabel("log(L)")
     plt.xlim(left=logxs.min()-0.5)
     plt.xlim(right=0.5)
-    plt.ylim(bottom=np.sort(logls)[int(0.05*len(logls))])
+    s = np.sort(logls)
+    bottom=s[int(0.05*len(s))]
+    top=s[-1] + 0.05*(s[-1] - bottom)
+    plt.ylim([bottom, top])
 
     plt.subplot(2, 1, 2)
     plt.plot(logxs, ps, alpha=0.6)
@@ -108,9 +111,9 @@ def postprocess(db):
     rank = 0
     for row in db.execute("SELECT p.id, llp.level, p.logl FROM particles p INNER JOIN\
                             levels_leq_particles llp ON p.id=llp.particle\
-                            WHERE p.id <= ? AND llp.level < ?\
+                            WHERE p.id <= ? AND llp.level <= ?\
                             ORDER BY llp.level, logl, tb;",
-                            (max_particle_id, len(logms))):
+                            (max_particle_id, min(len(logms), len(logxs), len(num_particles)))):
         particle_id, level, logl = row
         if level != old_level:
             rank = 0
@@ -134,7 +137,8 @@ if __name__ == "__main__":
     conn = apsw.Connection(".db/dnest5.db", flags=apsw.SQLITE_OPEN_READONLY)
     db = conn.cursor()
 
-    particles, resultss = postprocess(db)
+    particles, results = postprocess(db)
+    print(results)
 
     figure_1(db)
     figure_2(db)
