@@ -111,7 +111,7 @@ def postprocess(db):
     rank = 0
     for row in db.execute("SELECT p.id, llp.level, p.logl FROM particles p INNER JOIN\
                             levels_leq_particles llp ON p.id=llp.particle\
-                            WHERE p.id <= ? AND llp.level <= ?\
+                            WHERE p.id <= ? AND llp.level < ?\
                             ORDER BY llp.level, logl, tb;",
                             (max_particle_id, min(len(logms), len(logxs), len(num_particles)))):
         particle_id, level, logl = row
