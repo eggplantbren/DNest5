@@ -194,7 +194,7 @@ void Sampler<T>::run_thread(int thread)
         {
             std::cout << "Exploring ["
                       << levels.get_num_levels() << " levels, ";
-            std::cout << "highest log likelihood = "
+            std::cout << "highest logl = "
                       << std::get<0>(levels.get_top()) << "]..." << std::flush;
 
             // Copy levels
