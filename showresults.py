@@ -52,13 +52,41 @@ def figure_2(db):
     plt.ylim(bottom=0.0, top=1.0)
     plt.gcf().align_ylabels()
 
+def figure_3(particles):
+    """ The equivalent of DNest4's Figure 3. """
+
+    logxs = np.array([particles[p]["logx"] for p in particles])
+    logls = np.array([particles[p]["logl"] for p in particles])
+    logps = np.array([particles[p]["logm"] + particles[p]["logl"] for p in particles])
+    ps = np.exp(logps - np.max(logps))
+
+    plt.figure()
+    plt.subplot(2, 1, 1)
+    plt.plot(logxs, logls, alpha=0.6)
+    plt.ylabel("log(L)")
+    plt.xlim(left=logxs.min()-0.5)
+    plt.xlim(right=0.5)
+    plt.ylim(bottom=np.sort(logls)[int(0.05*len(logls))])
+
+    plt.subplot(2, 1, 2)
+    plt.plot(logxs, ps, alpha=0.6)
+    plt.xlabel("log(X)")
+    plt.ylabel("Posterior Weight")
+    plt.xlim(left=logxs.min()-0.5)
+    plt.xlim(right=0.5)
+    plt.ylim([0.0, 1.05])
+    plt.gcf().align_ylabels()
+
 
 def postprocess(db):
     """
     Estimate particle log-prior-passes
     """
-    logxs = db.execute("SELECT logx FROM levels;").fetchall()
-    logxs = [logx[0] for logx in logxs]
+    # Get max particle ID and trucate with it
+    max_particle_id = db.execute("SELECT MAX(id) FROM particles;").fetchone()[0]
+    logxs = []
+    for row in db.execute("SELECT logx FROM levels;"):
+        logxs.append(row[0])
 
     # Level logms
     logms = []
@@ -76,45 +104,42 @@ def postprocess(db):
 
     # Compute the logms
     particles = dict()
+    old_level = 0
+    rank = 0
     for row in db.execute("SELECT p.id, llp.level, p.logl FROM particles p INNER JOIN\
-                            levels_leq_particles llp ON p.id=llp.particle;"):
+                            levels_leq_particles llp ON p.id=llp.particle\
+                            WHERE p.id <= ? AND llp.level < ?\
+                            ORDER BY llp.level, logl, tb;",
+                            (max_particle_id, len(logms))):
         particle_id, level, logl = row
+        if level != old_level:
+            rank = 0
+            old_level = level
 
-        if level < len(logms):
-            particles[particle_id] = dict()
-            particles[particle_id]["logm"] = logms[level]\
-                                                - np.log(num_particles[level])
-            particles[particle_id]["logl"] = logl
+        particles[particle_id] = dict()
+        particles[particle_id]["logm"] = logms[level]\
+                                            - np.log(num_particles[level])
+        particles[particle_id]["logl"] = logl
+        # X_particle = X_level - (rank+0.5)*M_particles
+        logx = logdiffexp(logxs[level], np.log(rank + 0.5) + particles[particle_id]["logm"])
+        particles[particle_id]["logx"] = logx
+        rank += 1
 
-    # Now compute logxs as well
-    # X_{i+1} = X_i - m_i
-    # logX_{i+1} = log(exp(logX_i) - exp(logm_i))
-#    logx = 0.0
-#    for row in db.execute("SELECT id, logl FROM particles ORDER BY logl, tb;"):
-#        particle_id, logl = row
-#        print(logx, particles[particle_id]["logm"])
-#        logx = logdiffexp(logx, particles[particle_id]["logm"])
-##        particles[particle_id]["logx"] = logx
-#    plt.plot([particles[p]["logm"] for p in particles])
-#    print(logsumexp([particles[p]["logm"] for p in particles]))
-#    plt.show()
-
-    result = dict(logz=logsumexp(\
-                            [particles[pid]["logm"]\
-                             + particles[pid]["logl"] for pid in particles]))
-    return result
+    results = dict(logz=logsumexp([particles[pid]["logm"]\
+                                    + particles[pid]["logl"]\
+                                  for pid in particles]))
+    return particles, results
 
 if __name__ == "__main__":
     conn = apsw.Connection(".db/dnest5.db", flags=apsw.SQLITE_OPEN_READONLY)
     db = conn.cursor()
 
-    results = postprocess(db)
-    print(results)
+    particles, resultss = postprocess(db)
 
     figure_1(db)
     figure_2(db)
+    figure_3(particles)
     plt.show()
-
 
     conn.close()
 
