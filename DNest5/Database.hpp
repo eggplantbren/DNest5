@@ -134,6 +134,7 @@ void Database::clear_previous()
     db << "DELETE FROM samplers;";
     db << "DELETE FROM particles;";
     db << "DELETE FROM levels;";
+    db << "DELETE FROM rngs;";
 }
 
 int Database::num_full_particles(int sampler_id)
