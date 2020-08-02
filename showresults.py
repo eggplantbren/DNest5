@@ -79,10 +79,12 @@ def postprocess(db):
     for row in db.execute("SELECT p.id, llp.level, p.logl FROM particles p INNER JOIN\
                             levels_leq_particles llp ON p.id=llp.particle;"):
         particle_id, level, logl = row
-        particles[particle_id] = dict()
-        particles[particle_id]["logm"] = logms[level]\
-                                            - np.log(num_particles[level])
-        particles[particle_id]["logl"] = logl
+
+        if level < len(logms):
+            particles[particle_id] = dict()
+            particles[particle_id]["logm"] = logms[level]\
+                                                - np.log(num_particles[level])
+            particles[particle_id]["logl"] = logl
 
     # Now compute logxs as well
     # X_{i+1} = X_i - m_i
