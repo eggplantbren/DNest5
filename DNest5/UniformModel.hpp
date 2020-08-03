@@ -25,7 +25,7 @@ class UniformModel
 
         // As an alternative to xs, here is a map from strings
         // (parameter names) to values (parameter values). Use one or the other.
-        static std::optional<std::map<std::string, double>> params;
+        std::map<std::string, double> params;
 
     public:
 
