@@ -66,13 +66,13 @@ double UniformModel<num_params>::perturb(RNG& rng)
 {
     int num = 1;
     if(rng.rand() <= 0.5)
-        num = int(pow(xs.size(), rng.rand()));
+        num = int(pow(us.size(), rng.rand()));
 
     for(int i=0; i<num; ++i)
     {
-        int k = rng.rand_int(xs.size());
-        xs[k] += rng.randh();
-        wrap(xs[k]);
+        int k = rng.rand_int(us.size());
+        us[k] += rng.randh();
+        wrap(us[k]);
     }
     us_to_params();
 
