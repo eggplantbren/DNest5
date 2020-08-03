@@ -1,4 +1,5 @@
 import apsw
+import json
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -57,7 +58,7 @@ def figure_3(particles):
 
     logxs = np.array([particles[p]["logx"] for p in particles])
     logls = np.array([particles[p]["logl"] for p in particles])
-    logps = np.array([particles[p]["logm"] + particles[p]["logl"] for p in particles])
+    logps = np.array([particles[p]["logp"] for p in particles])
     ps = np.exp(logps - np.max(logps))
 
     plt.figure()
@@ -131,6 +132,14 @@ def postprocess(db):
     results = dict(logz=logsumexp([particles[pid]["logm"]\
                                     + particles[pid]["logl"]\
                                   for pid in particles]))
+
+    # Posterior weights and information
+    results["h"] = 0.0
+    for particle_id in particles:
+        particle = particles[particle_id]
+        particle["logp"] = particle["logm"] + particle["logl"] - results["logz"]
+        results["h"] += np.exp(particle["logp"])*(particle["logl"] - results["logz"])
+
     return particles, results
 
 if __name__ == "__main__":
@@ -138,7 +147,7 @@ if __name__ == "__main__":
     db = conn.cursor()
 
     particles, results = postprocess(db)
-    print(results)
+    print(json.dumps(results, indent=4))
 
     figure_1(db)
     figure_2(db)
