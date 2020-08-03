@@ -3,7 +3,7 @@ import os
 import subprocess
 
 BUILD_DIR = ".build"
-HPP_DIR = "DNest5"
+HPP_DIRS = ["DNest5", "Examples"]
 
 def find_dependencies(source_file, source_files):
     """
@@ -22,29 +22,34 @@ def find_dependencies(source_file, source_files):
 
 # Get the hpp files
 source_files = []
-for filename in os.listdir(HPP_DIR):
-    if filename[-4:] == ".hpp":
-        source_files.append(dict(name=filename,
-                              path=HPP_DIR + "/" + filename,
-                              output=".build/" + filename + ".gch",
-                              deps=[]))
+hpps = [d + "/" + f for d in HPP_DIRS for f in os.listdir(d)]
+hpps = [hpp for hpp in hpps if hpp[-4:] == ".hpp"]
+for hpp in hpps:
+    name = hpp.split("/")[1]
+    source_file = dict(name=name, path=hpp)
+    source_file["output"] = ".build/" + name + ".gch"
+    source_file["deps"] = []
+    source_files.append(source_file)
 
-# Add cpp files
-for filename in os.listdir("."):
-    if filename[-4:] == ".cpp":
-        source_files.append(dict(name=filename, path=filename,
-                                 output=".build/" + filename[0:-4] + ".o",
-                                 deps=[]))
+# Add cpp files from current directory
+cpps = [f for f in os.listdir(".") if f[-4:] == ".cpp"]
+for cpp in cpps:
+    source_files.append(dict(name=cpp, path=cpp,
+                             output=".build/" + cpp[0:-4] + ".o",
+                             deps=[]))
 
 # Find dependencies
 for source_file in source_files:
     find_dependencies(source_file, source_files)
 
+## String for include part of Makefile
+#INCLUDES = "".join(["-I " + s + " " for s in HPP_DIRS + ["."]])
+
 # Open Makefile
 makefile = open("Makefile", "w")
 makefile.write(f"""CXX = g++
 FLAGS = -std=c++17
-INCLUDE = -I {HPP_DIR} -I .
+INCLUDE = -I .
 OPTIM = -O2 -g
 WARN = -Wall -Wextra -pedantic
 LINK = -lpthread -lsqlite3 -lyaml-cpp

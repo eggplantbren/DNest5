@@ -1,6 +1,6 @@
 #include <iostream>
 #include <DNest5/Sampler.hpp>
-#include <DNest5/SpikeSlab.hpp>
+#include <Examples/SpikeSlab.hpp>
 
 using namespace DNest5;
 
