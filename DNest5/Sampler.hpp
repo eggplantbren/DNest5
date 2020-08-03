@@ -195,7 +195,7 @@ void Sampler<T>::run_thread(int thread)
     while(true)
     {
         // Print a message and start DB transaction
-        if(thread == 0)
+        if(thread == 0 && !done)
         {
             std::cout << "Exploring ["
                       << levels.get_num_levels() << " levels, ";
@@ -268,9 +268,6 @@ void Sampler<T>::run_thread(int thread)
             std::cout << std::endl;
         }
     }
-
-    if(thread == 0)
-        db << "COMMIT;";
 }
 
 template<typename T>
