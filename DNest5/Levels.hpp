@@ -157,10 +157,10 @@ bool Levels::create_level()
         if(push_is_active)
         {
             double dist = double(logxs.size()) - 1.0 - double(i);
-            log_push[i] = -log(1.0 + pow(dist/options.lambda, 2));
+            log_push[i] = -0.5*pow(dist/options.lambda, 2);
         }
         else
-        log_push[i] = 0.0;
+            log_push[i] = 0.0;
     }
 
     std::cout << "Created level " << logxs.size() << " with logl = ";

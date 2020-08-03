@@ -64,6 +64,10 @@ class Sampler
         // Run a thread
         void run_thread(int thread);
 
+        // Prune lagging particles
+        void prune_laggards();
+        int pruned;
+
     public:
 
         // Construct with a set of options.
@@ -83,6 +87,7 @@ Sampler<T>::Sampler(Options _options)
 ,saved_particles(0)
 ,saved_full_particles(0)
 ,done(false)
+,pruned(0)
 {
     // Shorthand to database connection
     auto& db = database.db;
@@ -153,7 +158,7 @@ Sampler<T>::Sampler(Options _options)
         double tb = rng.rand();
         particles.emplace_back(std::move(t), logl, tb, level);
     }
-    std::cout << "done." << std::endl;
+    std::cout << "done.\n" << std::endl;
 
     db << "COMMIT;";
 }
@@ -251,6 +256,9 @@ void Sampler<T>::run_thread(int thread)
             if(created_level || (saved_full_particles % options.level_save_gap == 0))
                 save_levels();
             db << "COMMIT;";
+
+            // Check for any lagging particles
+            prune_laggards();
 
             std::cout << "Work done = ";
             std::cout << std::scientific << std::setprecision(3);
@@ -420,6 +428,36 @@ void Sampler<T>::metropolis_step_level(int k, int thread)
     // Accept
     if(rng.rand() <= exp(loga))
         level = level_prop;
+}
+
+template<typename T>
+void Sampler<T>::prune_laggards()
+{
+    // Find log push of each particle
+    std::vector<double> log_push(options.num_particles);
+    for(int i=0; i<options.num_particles; ++i)
+        log_push[i] = levels.get_log_push(std::get<3>(particles[i]));
+
+    // Copy particles
+    auto particles_copy = particles;
+    for(int i=0; i<options.num_particles; ++i)
+    {
+        if(log_push[i] < -10.0)
+        {
+            int j = rngs[0].rand_int(options.num_particles);
+            particles[i] = particles_copy[j];
+            ++pruned;
+        }
+    }
+    if(pruned > 0)
+    {
+        std::cout << pruned << " lagging particle";
+        if(pruned == 1)
+            std::cout << " has ";
+        else
+            std::cout << "s have ";
+        std::cout << "been pruned." << std::endl;
+    }
 }
 
 } // namespace
