@@ -42,8 +42,6 @@ for cpp in cpps:
 for source_file in source_files:
     find_dependencies(source_file, source_files)
 
-## String for include part of Makefile
-#INCLUDES = "".join(["-I " + s + " " for s in HPP_DIRS + ["."]])
 
 # Open Makefile
 makefile = open("Makefile", "w")
@@ -55,11 +53,25 @@ WARN = -Wall -Wextra -pedantic
 LINK = -lpthread -lsqlite3 -lyaml-cpp
 ALL = $(FLAGS) $(INCLUDE) $(WARN) $(OPTIM)\n\n""")
 
-makefile.write("default: main\n\n")
-makefile.write("main: .build/main.o")
-makefile.write("\n\t$(CXX) $(ALL) -pthread -o main .build/main.o $(LINK)\n\n")
+# Default is to make all the executables
+makefile.write("default:")
+for cpp in cpps:
+    makefile.write(" ")
+    makefile.write(cpp[0:-4])
+makefile.write("\n\n")
 
-# Create Make targets
+# Recipe for each executable
+for source_file in source_files:
+    # If the output was a .o file, there's also an executable
+    if source_file["output"][-2:] == ".o":
+        obj = source_file["output"]
+        exe = obj.split("/")[1][0:-2]
+        makefile.write(exe + ": " + obj + "\n")
+        makefile.write("\t$(CXX) $(ALL) -pthread -o " + exe + " " + obj + " ")
+        makefile.write("$(LINK)\n\n")
+
+
+# The rest of the make targets
 for source_file in source_files:
     line = source_file["output"] + ": "
     line += source_file["path"]
@@ -70,8 +82,13 @@ for source_file in source_files:
     makefile.write("\n\n")
 
 makefile.write("clean:\n")
-makefile.write("\t rm main .build/*\n")
-
+makefile.write("\t rm .build/*")
+for source_file in source_files:
+    # If the output was a .o file, there's also an executable
+    if source_file["output"][-2:] == ".o":
+        obj = source_file["output"]
+        exe = obj.split("/")[1][0:-2]
+        makefile.write(" " + exe)
 makefile.close()
 
 subprocess.run("make")
