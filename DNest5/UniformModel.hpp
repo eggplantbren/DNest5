@@ -31,7 +31,7 @@ class UniformModel
 
         // Default constructor sets up the vectors
         UniformModel(RNG& rng);
-        virtual ~UniformModel();
+        virtual ~UniformModel() = default;
 
         // Functions specified here
         virtual double perturb(RNG& rng) final;
@@ -52,13 +52,6 @@ UniformModel<num_params>::UniformModel(RNG& rng)
 {
     for(double& u: us)
         u = rng.rand();
-}
-
-
-template<int num_params>
-UniformModel<num_params>::~UniformModel()
-{
-
 }
 
 template<int num_params>
