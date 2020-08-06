@@ -171,11 +171,14 @@ def postprocess(db, rng_seed=0):
     db2.execute("COMMIT;")
     db2.execute("BEGIN;")
     rng.seed(rng_seed)
-    for i in range(int(ess) + 1):
-        k = int(fp_ids[rng.randint(fp_ids.size)])
-        blob = db.execute("SELECT params FROM particles WHERE id = ?;",
-                          (k, )).fetchone()[0]
-        db2.execute("INSERT INTO particles (params) VALUES (?);", (blob, ))
+    saved = 0
+    while saved < int(ess) + 1:
+        k = rng.randint(fp_ids.size)
+        if rng.rand() <= np.exp(fp_logps[k] - top):
+            blob = db.execute("SELECT params FROM particles WHERE id = ?;",
+                              (int(fp_ids[k]), )).fetchone()[0]
+            db2.execute("INSERT INTO particles (params) VALUES (?);", (blob, ))
+            saved += 1
     db2.execute("COMMIT;")
     conn2.close()
     print("Wrote posterior samples to posterior.db.")
