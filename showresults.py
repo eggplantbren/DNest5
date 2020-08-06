@@ -2,6 +2,7 @@ import apsw
 import json
 import matplotlib.pyplot as plt
 import numpy as np
+import numpy.random as rng
 
 def logsumexp(ls):
     top = np.max(ls)
@@ -82,7 +83,7 @@ def figure_3(particles):
     plt.gcf().align_ylabels()
 
 
-def postprocess(db):
+def postprocess(db, rng_seed=0):
     """
     Estimate particle log-prior-passes
     """
@@ -110,12 +111,13 @@ def postprocess(db):
     particles = dict()
     old_level = 0
     rank = 0
-    for row in db.execute("SELECT p.id, llp.level, p.logl FROM particles p INNER JOIN\
+    for row in db.execute("SELECT p.id, llp.level, p.logl, p.params IS NOT NULL\
+                            FROM particles p INNER JOIN\
                             levels_leq_particles llp ON p.id=llp.particle\
                             WHERE p.id <= ? AND llp.level < ?\
                             ORDER BY llp.level, logl, tb;",
                             (max_particle_id, min(len(logms), len(logxs), len(num_particles)))):
-        particle_id, level, logl = row
+        particle_id, level, logl, full = row
         if level != old_level:
             rank = 0
             old_level = level
@@ -127,18 +129,56 @@ def postprocess(db):
         # X_particle = X_level - (rank+0.5)*M_particles
         logx = logdiffexp(logxs[level], np.log(rank + 0.5) + particles[particle_id]["logm"])
         particles[particle_id]["logx"] = logx
+        particles[particle_id]["full"] = bool(full)
         rank += 1
 
     results = dict(logz=logsumexp([particles[pid]["logm"]\
                                     + particles[pid]["logl"]\
                                   for pid in particles]))
 
+    # Parallel lists
+    fp_ids = []
+    fp_logps = []
+
     # Posterior weights and information
     results["h"] = 0.0
     for particle_id in particles:
         particle = particles[particle_id]
         particle["logp"] = particle["logm"] + particle["logl"] - results["logz"]
+        if particle["full"]:
+            fp_ids.append(particle_id)
+            fp_logps.append(particle["logp"])
         results["h"] += np.exp(particle["logp"])*(particle["logl"] - results["logz"])
+    fp_ids = np.array(fp_ids)
+    fp_logps = np.array(fp_logps)
+
+    # Normalise
+    fp_logps -= logsumexp(fp_logps)
+    ess = np.exp(-np.sum(np.exp(fp_logps)*fp_logps))
+    top = np.max(fp_logps)
+    results["full_particle_ess"] = ess
+
+    # Generate posterior
+    conn2 = apsw.Connection("posterior.db")
+    db2 = conn2.cursor()
+    db2.execute("PRAGMA JOURNAL_MODE=OFF;")
+    db2.execute("PRAGMA SYNCHRONOUS=0;")
+    db2.execute("BEGIN;")
+    db2.execute("CREATE TABLE IF NOT EXISTS particles\
+                    (id     INTEGER NOT NULL PRIMARY KEY,\
+                     params BLOB NOT NULL);")
+    db2.execute("DELETE FROM particles;")
+    db2.execute("COMMIT;")
+    db2.execute("BEGIN;")
+    rng.seed(rng_seed)
+    for i in range(int(ess) + 1):
+        k = int(fp_ids[rng.randint(fp_ids.size)])
+        blob = db.execute("SELECT params FROM particles WHERE id = ?;",
+                          (k, )).fetchone()[0]
+        db2.execute("INSERT INTO particles (params) VALUES (?);", (blob, ))
+    db2.execute("COMMIT;")
+    conn2.close()
+    print("Wrote posterior samples to posterior.db.")
 
     return particles, results
 

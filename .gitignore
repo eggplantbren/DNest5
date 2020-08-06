@@ -1,6 +1,7 @@
 .build/*
 .db/*
 dnest5.db
+posterior.db
 main
 Makefile
 postprocess
