@@ -3,15 +3,18 @@
 
 #include <DNest5/Misc.hpp>
 #include <DNest5/Options.hpp>
+#include <functional>
 #include <iostream>
+#include <optional>
 #include <sqlite_modern_cpp/hdr/sqlite_modern_cpp.h>
+#include <string>
 
 namespace DNest5
 {
 
 // A postprocessing function
-void postprocess();
-
+void postprocess(std::optional<std::function<std::vector<char>(std::string)>>
+                 blob_to_text = {}, std::string csv_header = "");
 
 /* Create and manage the output database */
 class Database
@@ -148,7 +151,8 @@ int Database::num_full_particles(int sampler_id)
     return num;
 }
 
-void postprocess()
+void postprocess(std::optional<std::function<std::vector<char>(std::string)>>
+                 blob_to_text, std::string csv_header)
 {
     // A read-only database connection
     sqlite::database reader(Options::db_filename,
