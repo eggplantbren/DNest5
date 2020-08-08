@@ -164,7 +164,7 @@ void postprocess()
     std::vector<double> level_logxs, level_num_particles;
     reader << "SELECT logx, num_particles\
                FROM levels l INNER JOIN particles_per_level ppl\
-               ON l.id = ppl.level;" >>
+               ON l.level = ppl.level;" >>
         [&](double logx, int n)
         {
             level_logxs.push_back(logx);
@@ -179,11 +179,6 @@ void postprocess()
         level_logms.push_back(logdiffexp(level_logxs[i], level_logxs[i+1]));
     level_logms.push_back(logdiffexp(level_logxs.back(), minus_infinity));
 /*
-    # Level num_particles
-    num_particles = []
-    for row in db.execute("SELECT num_particles\
-                           FROM particles_per_level;"):
-        num_particles.append(row[0])
 
     # Compute the logms
     particles = dict()
