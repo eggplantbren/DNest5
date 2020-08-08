@@ -4,6 +4,6 @@ dnest5.db
 posterior.db
 main
 Makefile
-postprocess
+posterior
 __pycache__
 .test_accuracy_output.csv

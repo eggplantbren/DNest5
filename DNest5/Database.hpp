@@ -9,6 +9,9 @@
 namespace DNest5
 {
 
+// A postprocessing function
+void postprocess();
+
 
 /* Create and manage the output database */
 class Database
@@ -144,6 +147,18 @@ int Database::num_full_particles(int sampler_id)
        << sampler_id >> num;
     return num;
 }
+
+void postprocess()
+{
+    // A read-only database connection
+    sqlite::database reader(Options::db_filename,
+                            sqlite::sqlite_config { sqlite::OpenFlags::READONLY,
+                                                    nullptr,
+                                                    sqlite::Encoding::ANY });
+
+    // 
+}
+
 
 } // namespace
 
