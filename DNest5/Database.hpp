@@ -156,11 +156,27 @@ int Database::num_full_particles(int sampler_id)
 template<typename T>
 void postprocess()
 {
+    std::cout << "Begin postprocessing\n";
+    std::cout << "--------------------\n" << std::endl;
+
     // A read-only database connection
     sqlite::database reader(Options::db_filename,
                             sqlite::sqlite_config { sqlite::OpenFlags::READONLY,
                                                     nullptr,
                                                     sqlite::Encoding::ANY });
+
+    // A writing connection to posterior.db
+    sqlite::database db("output/posterior.db");
+    db << "PRAGMA SYNCHRONOUS = 0;";
+    db << "PRAGMA JOURNAL_MODE = WAL;";
+    db << "BEGIN;";
+    db << "CREATE TABLE IF NOT EXISTS particles\
+            (id   INTEGER NOT NULL PRIMARY KEY,\
+             logx REAL NOT NULL,\
+             logm REAL NOT NULL,\
+             logp REAL);";
+    db << "DELETE FROM particles;";
+    db << "COMMIT;";
 
     // Get maximum particle ID and number of levelsand use it for truncation
     int max_particle_id, num_levels;
@@ -217,6 +233,9 @@ void postprocess()
             logxs.emplace_back(logx);
             is_full.push_back(full);
             ++rank;
+
+            db << "INSERT INTO particles (id, logx, logm) VALUES (?, ?, ?);"
+               << particle_id << logx << logms.back();
         };
 
     // Prior times likelihood, posterior, information, etc
@@ -225,7 +244,11 @@ void postprocess()
         loghs[i] = logms[i] + logls[i];
     double logz = logsumexp(loghs);
     for(int i=0; i<int(logms.size()); ++i)
+    {
         logps[i] = loghs[i] - logz;
+        db << "UPDATE particles SET logp = ? WHERE id = ?;"
+           << logps[i] << particle_ids[i];
+    }
     double H = 0.0;
     for(int i=0; i<int(loghs.size()); ++i)
     {
@@ -263,7 +286,7 @@ void postprocess()
     sout << "logz: " << logz << "\n\n";
     sout << "# Prior-to-posterior Kullback-Leibler divergence, in nats\n";
     sout << "info: " << H << "\n\n";
-    sout << "# Effective posterior sample size\n";
+    sout << "# Effective posterior sample size (full particles)\n";
     sout << "ess: " << int(ess) + 1 << "\n\n";
 
     std::fstream fout("output/results.yaml", std::ios::out);
@@ -275,22 +298,10 @@ void postprocess()
 
     // Get posterior samples and output as CSV
     RNG rng; rng.set_seed(0);
-    std::cout << "Generating output/posterior.csv and output/posterior.db: ";
-    std::cout << std::flush;
     int count = 0;
     fout.open("output/posterior.csv", std::ios::out);
     fout << std::setprecision(Options::stdout_precision);
     T t(rng);
-    sqlite::database db("output/posterior.db");
-    db << "PRAGMA SYNCHRONOUS = 0;";
-    db << "PRAGMA JOURNAL_MODE = WAL;";
-    db << "BEGIN;";
-    db << "CREATE TABLE IF NOT EXISTS particles\
-            (id   INTEGER NOT NULL PRIMARY KEY,\
-             logp REAL NOT NULL,\
-             pid  INTEGER NOT NULL);";
-    db << "DELETE FROM particles;";
-    db << "COMMIT;";
     db << "BEGIN;";
     while(count < int(ess) + 1)
     {
@@ -303,14 +314,14 @@ void postprocess()
             t.from_blob(blob);
             fout << t.to_string() << std::endl;
             ++count;
-            db << "INSERT INTO particles (logp, pid) VALUES (?, ?);"
-               << full_logps[k] << full_pids[k];
         }
     };
     db << "COMMIT;";
     db << "VACUUM;";
     db << "PRAGMA main.WAL_CHECKPOINT(TRUNCATE);";
-    std::cout << "done." << std::endl;
+
+    std::cout << "--------------------\n";
+    std::cout << "Finished." << std::endl;
 }
 
 
