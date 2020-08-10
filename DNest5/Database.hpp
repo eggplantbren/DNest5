@@ -52,6 +52,7 @@ Database::Database()
     pragmas();
     db << "BEGIN;";
     create_tables();
+    clear_previous();
     create_indexes();
     create_views();
     db << "COMMIT;";

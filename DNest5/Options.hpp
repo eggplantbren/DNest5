@@ -29,7 +29,6 @@ class Options
         double beta;
         int max_num_saves;
         int rng_seed;
-        bool clear_previous;
 
     public:
 
@@ -43,8 +42,7 @@ class Options
                 double _lambda = 10.0,
                 double _beta = 100.0,
                 int _max_num_saves = 100000,
-                std::optional<int> _rng_seed = std::optional<int>(),
-                bool _clear_previous = true);
+                std::optional<int> _rng_seed = std::optional<int>());
 
         // Constructor that loads from a YAML file
         Options(const char* yaml_file);
@@ -73,8 +71,7 @@ Options::Options(int _num_particles,
                  double _lambda,
                  double _beta,
                  int _max_num_saves,
-                 std::optional<int> _rng_seed,
-                 bool _clear_previous)
+                 std::optional<int> _rng_seed)
 :num_particles(_num_particles)
 ,num_threads(_num_threads)
 ,new_level_interval(_new_level_interval)
@@ -85,7 +82,6 @@ Options::Options(int _num_particles,
 ,beta(_beta)
 ,max_num_saves(_max_num_saves)
 ,rng_seed(_rng_seed.value_or(time(0)))
-,clear_previous(_clear_previous)
 {
     std::cout << std::setprecision(stdout_precision);
     assert(save_interval % num_threads == 0);
@@ -124,7 +120,6 @@ Options::Options(const char* yaml_file)
         // Use the time
         rng_seed = time(0);
     }
-    clear_previous = file["clear_previous"].as<bool>();
 
     assert(save_interval % num_threads == 0);
     assert(num_particles % num_threads == 0);

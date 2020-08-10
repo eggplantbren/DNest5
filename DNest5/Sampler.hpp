@@ -93,13 +93,6 @@ Sampler<T>::Sampler(Options _options)
     auto& db = database.db;
     db << "BEGIN;";
 
-    // Clear previous data (if requested)
-    if(options.clear_previous)
-    {
-        std::cout << "Clearing previous runs." << std::endl;
-        database.clear_previous();
-    }
-
     // Initialise the sampler, first by setting a sampler ID.
     std::cout << "Initialising sampler:" << std::endl;
     sampler_id = 1;

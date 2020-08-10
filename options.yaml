@@ -10,4 +10,3 @@ lambda: 10.0
 beta: 100.0
 max_num_saves: 100000
 rng_seed: "auto"
-clear_previous: true
