@@ -233,7 +233,7 @@ void Sampler<T>::run_thread(int thread)
             if(full)
                 ++saved_full_particles;
             save_particle(k, full);
-            done = saved_particles >= options.max_num_saves;
+            done = saved_particles >= (unsigned int)options.max_num_saves;
 
             // Merge level data
             auto backup = levels;
@@ -298,20 +298,21 @@ void Sampler<T>::save_levels()
     // Alias
     auto& db = database.db;
 
-    // Rewrite all levels from scratch (for this sampler ID)
-    db << "DELETE FROM levels WHERE sampler = ?;" << sampler_id;
-
     int num_levels = levels.get_num_levels();
     for(int i=0; i<num_levels; ++i)
     {
         const auto& [logl, tb] = levels.get_pair(i);
-        db << "INSERT INTO levels\
-                (sampler, level, logx, logl, tb,\
-                 exceeds, visits, accepts, tries)\
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);"
-           << sampler_id << i << levels.get_logx(i) << logl << tb
-           << levels.get_exceeds(i) << levels.get_visits(i)
-           << levels.get_accepts(i) << levels.get_tries(i);
+
+        unsigned long long e, v, a, t;
+        e = levels.get_exceeds(i); v = levels.get_visits(i);
+        a = levels.get_accepts(i); t = levels.get_tries(i);
+
+        // Upsert each level
+        db << "INSERT INTO levels VALUES (?, ?, ?, ?, ?, ?, ?, ?)\
+               ON CONFLICT (id) DO UPDATE\
+               SET (exceeds, visits, accepts, tries) = (?, ?, ?, ?);"
+           << i << levels.get_logx(i) << logl << tb
+           << e << v << a << t << e << v << a << t;
     }
 }
 

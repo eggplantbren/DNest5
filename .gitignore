@@ -1,7 +1,5 @@
 .build/*
-.db/*
-dnest5.db
-posterior.db
+output/*
 main
 Makefile
 posterior

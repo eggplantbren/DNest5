@@ -6,7 +6,7 @@ using namespace DNest5;
 
 int main()
 {
-    postprocess();
+    postprocess<ModelType>();
     return 0;
 }
 

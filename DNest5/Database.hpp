@@ -1,6 +1,7 @@
 #ifndef DNest5_Database_hpp
 #define DNest5_Database_hpp
 
+#include <deque>
 #include <DNest5/Misc.hpp>
 #include <DNest5/Options.hpp>
 #include <functional>
@@ -13,8 +14,8 @@ namespace DNest5
 {
 
 // A postprocessing function
-void postprocess(std::optional<std::function<std::vector<char>(std::string)>>
-                 blob_to_text = {}, std::string csv_header = "");
+template<typename T>
+void postprocess();
 
 /* Create and manage the output database */
 class Database
@@ -70,7 +71,8 @@ void Database::pragmas()
 void Database::create_tables()
 {
     db << "CREATE TABLE IF NOT EXISTS samplers\
-            (id                     INTEGER NOT NULL PRIMARY KEY,\
+            (id                     INTEGER NOT NULL PRIMARY KEY\
+                                    CHECK (id = 1),\
              num_particles          INTEGER NOT NULL,\
              num_threads            INTEGER NOT NULL,\
              new_level_interval     INTEGER NOT NULL,\
@@ -94,20 +96,17 @@ void Database::create_tables()
              logl    REAL NOT NULL,\
              tb      REAL NOT NULL,\
              FOREIGN KEY (sampler) REFERENCES samplers (id),\
-             FOREIGN KEY (sampler, level) REFERENCES levels (sampler, level));";
+             FOREIGN KEY (level) REFERENCES levels (id));";
 
     db << "CREATE TABLE IF NOT EXISTS levels\
-            (sampler INTEGER NOT NULL,\
-             level   INTEGER NOT NULL,\
+            (id      INTEGER NOT NULL PRIMARY KEY,\
              logx    REAL NOT NULL,\
              logl    REAL NOT NULL,\
              tb      REAL NOT NULL,\
              exceeds INTEGER NOT NULL DEFAULT 0,\
              visits  INTEGER NOT NULL DEFAULT 0,\
              accepts INTEGER NOT NULL DEFAULT 0,\
-             tries   INTEGER NOT NULL DEFAULT 0,\
-             PRIMARY KEY (sampler, level),\
-             FOREIGN KEY (sampler) REFERENCES samplers (id));";
+             tries   INTEGER NOT NULL DEFAULT 0);";
 }
 
 void Database::create_indexes()
@@ -123,7 +122,7 @@ void Database::create_views()
 {
     db << "CREATE VIEW IF NOT EXISTS levels_leq_particles AS\
             SELECT p.id particle,\
-                   (SELECT level FROM levels l\
+                   (SELECT id FROM levels l\
                         WHERE (l.logl, l.tb) <= (p.logl, p.tb)\
                         ORDER BY l.logl DESC, l.tb DESC\
                         LIMIT 1) AS level\
@@ -151,8 +150,8 @@ int Database::num_full_particles(int sampler_id)
     return num;
 }
 
-void postprocess(std::optional<std::function<std::vector<char>(std::string)>>
-                 blob_to_text, std::string csv_header)
+template<typename T>
+void postprocess()
 {
     // A read-only database connection
     sqlite::database reader(Options::db_filename,
@@ -160,15 +159,16 @@ void postprocess(std::optional<std::function<std::vector<char>(std::string)>>
                                                     nullptr,
                                                     sqlite::Encoding::ANY });
 
-    // Get maximum particle ID and use it for truncation
-    int max_particle_id;
+    // Get maximum particle ID and number of levelsand use it for truncation
+    int max_particle_id, num_levels;
     reader << "SELECT MAX(id) FROM particles;" >> max_particle_id;
+    reader << "SELECT COUNT(id) FROM levels;" >> num_levels;
 
     // Load levels into a vector
     std::vector<double> level_logxs, level_num_particles;
     reader << "SELECT logx, num_particles\
                FROM levels l INNER JOIN particles_per_level ppl\
-               ON l.level = ppl.level;" >>
+               ON l.id = ppl.level;" >>
         [&](double logx, int n)
         {
             level_logxs.push_back(logx);
@@ -182,33 +182,58 @@ void postprocess(std::optional<std::function<std::vector<char>(std::string)>>
     for(int i=0; i<int(level_logxs.size())-1; ++i)
         level_logms.push_back(logdiffexp(level_logxs[i], level_logxs[i+1]));
     level_logms.push_back(logdiffexp(level_logxs.back(), minus_infinity));
-/*
 
-    # Compute the logms
-    particles = dict()
-    old_level = 0
-    rank = 0
-    for row in db.execute("SELECT p.id, llp.level, p.logl, p.params IS NOT NULL\
+    // Compute log-masses of the particles
+    int rank = 0;
+    int old_level = 0;
+    // Parallel vectors of particle information
+    std::vector<int> particle_ids; std::vector<double> logms, logls, logxs;
+    std::deque<bool> is_full;
+    reader << "SELECT p.id, llp.level, p.logl, p.params IS NOT NULL\
                             FROM particles p INNER JOIN\
                             levels_leq_particles llp ON p.id=llp.particle\
                             WHERE p.id <= ? AND llp.level < ?\
-                            ORDER BY llp.level, logl, tb;",
-                            (max_particle_id, min(len(logms), len(logxs), len(num_particles)))):
-        particle_id, level, logl, full = row
-        if level != old_level:
-            rank = 0
-            old_level = level
+                            ORDER BY llp.level, logl, tb;"
+       << max_particle_id << num_levels >>
+        [&](int particle_id, int level, double logl, bool full)
+        {
+            if(level != old_level)
+            {
+                rank = 0;
+                old_level = level;
+            }
 
-        particles[particle_id] = dict()
-        particles[particle_id]["logm"] = logms[level]\
-                                            - np.log(num_particles[level])
-        particles[particle_id]["logl"] = logl
-        # X_particle = X_level - (rank+0.5)*M_particles
-        logx = logdiffexp(logxs[level], np.log(rank + 0.5) + particles[particle_id]["logm"])
-        particles[particle_id]["logx"] = logx
-        particles[particle_id]["full"] = bool(full)
-        rank += 1
+            particle_ids.push_back(particle_id);
+            logms.emplace_back(level_logms[level]
+                                    - log(level_num_particles[level]));
+            logls.push_back(logl);
 
+            // X_particle = X_level - (rank+0.5)*M_particles
+            double logx = logdiffexp(level_logxs[level],
+                                     log(rank + 0.5) + logms.back());
+            logxs.emplace_back(logx);
+            is_full.push_back(full);
+            ++rank;
+        };
+
+    // Prior times likelihood, posterior, information
+    std::vector<double> loghs(logms.size()), logps(logms.size());
+    for(int i=0; i<int(logms.size()); ++i)
+        loghs[i] = logms[i] + logls[i];
+    double logz = logsumexp(loghs);
+    for(int i=0; i<int(logms.size()); ++i)
+        logps[i] = loghs[i] - logz;
+    double H = 0.0;
+    for(int i=0; i<int(loghs.size()); ++i)
+    {
+        double p = exp(logps[i]);
+        H += p*logps[i];
+    }
+
+    // Save results
+    
+
+/*
     results = dict(logz=logsumexp([particles[pid]["logm"]\
                                     + particles[pid]["logl"]\
                                   for pid in particles]))

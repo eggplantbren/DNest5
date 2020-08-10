@@ -50,7 +50,7 @@ class Options
         Options(const char* yaml_file);
 
         // Stuff the user doesn't need to control
-        static constexpr auto db_filename = ".db/dnest5.db";
+        static constexpr auto db_filename = "output/dnest5.db";
         static constexpr int stdout_precision = 12;
         static constexpr int rng_seed_gap = 123;
         static constexpr int level_save_gap = 10;
