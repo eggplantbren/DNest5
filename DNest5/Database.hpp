@@ -4,9 +4,10 @@
 #include <deque>
 #include <DNest5/Misc.hpp>
 #include <DNest5/Options.hpp>
+#include <fstream>
 #include <functional>
+#include <iomanip>
 #include <iostream>
-#include <optional>
 #include <sqlite_modern_cpp/hdr/sqlite_modern_cpp.h>
 #include <string>
 
@@ -227,11 +228,23 @@ void postprocess()
     for(int i=0; i<int(loghs.size()); ++i)
     {
         double p = exp(logps[i]);
-        H += p*logps[i];
+        H += -p*logps[i];
     }
 
     // Save results
-    
+    std::fstream fout("output/results.yaml", std::ios::out);
+    fout << std::setprecision(14);
+    fout << "# Results file written by DNest5." << std::endl;
+    fout << "---\n";
+    fout << "logz: " << logz << std::endl;
+    fout << "info: " << H << std::endl;
+    fout.close();
+
+    // And to stdout
+    std::cout << "---\n";
+    std::cout << std::setprecision(Options::stdout_precision);
+    std::cout << "logz: " << logz << std::endl;
+    std::cout << "info: " << H << std::endl;
 
 /*
     results = dict(logz=logsumexp([particles[pid]["logm"]\

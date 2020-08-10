@@ -1,6 +1,6 @@
 #include <iostream>
+#include <DNest5/ModelType.hpp>
 #include <DNest5/Sampler.hpp>
-#include <ModelType.h>
 
 using namespace DNest5;
 
