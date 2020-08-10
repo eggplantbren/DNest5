@@ -2,6 +2,6 @@
 output/*
 main
 Makefile
-posterior
+postprocess
 __pycache__
 .test_accuracy_output.csv

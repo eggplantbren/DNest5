@@ -3,6 +3,7 @@ import json
 import matplotlib.pyplot as plt
 import numpy as np
 import numpy.random as rng
+import subprocess
 
 def logsumexp(ls):
     top = np.max(ls)
@@ -15,6 +16,7 @@ def logdiffexp(x, y):
 def figure_1(db):
     """ The equivalent of DNest4's Figure 1. """
 
+    print("Creating Figure 1: ", end="", flush=True)
     plt.figure()
     ids = []
     levels = []
@@ -25,13 +27,17 @@ def figure_1(db):
     plt.plot(ids, levels, alpha=0.6)
     plt.xlabel("Iteration")
     plt.ylabel("Level")
+    plt.savefig("output/figure1.pdf")
+    print("done.", flush=True)
 
 
 def figure_2(db):
     """ The equivalent of DNest4's Figure 2. """
 
+    print("Creating Figure 2: ", end="", flush=True)
+
     levels, logxs, acceptance_rates = [], [], []
-    for row in db.execute("SELECT level, logx, accepts, tries FROM levels;"):
+    for row in db.execute("SELECT id, logx, accepts, tries FROM levels;"):
         level, logx, accepts, tries = row
         levels.append(level)
         logxs.append(logx)
@@ -53,14 +59,32 @@ def figure_2(db):
     plt.xlim(left=-0.5, right=np.max(levels)+0.5)
     plt.ylim(bottom=0.0, top=1.0)
     plt.gcf().align_ylabels()
+    plt.savefig("output/figure2.pdf")
+    print("done.", flush=True)
 
-def figure_3(particles):
+def figure_3(db):
     """ The equivalent of DNest4's Figure 3. """
 
-    logxs = np.array([particles[p]["logx"] for p in particles])
-    logls = np.array([particles[p]["logl"] for p in particles])
-    logps = np.array([particles[p]["logp"] for p in particles])
-    ps = np.exp(logps - np.max(logps))
+    print("Creating Figure 3: ", end="", flush=True)
+
+    # Connect to posterior.db as well
+    db.execute("ATTACH DATABASE 'output/posterior.db' AS posterior;")
+
+    logxs = []
+    logls = []
+    logps = []
+    for row in db.execute("SELECT logx, logl, logp FROM posterior.particles\
+                            INNER JOIN main.particles\
+                            ON posterior.particles.id = main.particles.id\
+                            ORDER BY logl, tb;"):
+        logxs.append(row[0])
+        logls.append(row[1])
+        logps.append(row[2])
+    logxs = np.array(logxs)
+    logls = np.array(logls)
+    logps = np.array(logps)
+
+    db.execute("DETACH DATABASE posterior;")
 
     plt.figure()
     plt.subplot(2, 1, 1)
@@ -74,22 +98,27 @@ def figure_3(particles):
     plt.ylim([bottom, top])
 
     plt.subplot(2, 1, 2)
-    plt.plot(logxs, ps, alpha=0.6)
+    plt.plot(logxs, np.exp(logps - logps.max()), alpha=0.6)
     plt.xlabel("log(X)")
-    plt.ylabel("Posterior Weight")
+    plt.ylabel("Posterior Weight (Relative)")
     plt.xlim(left=logxs.min()-0.5)
     plt.xlim(right=0.5)
     plt.ylim([0.0, 1.05])
     plt.gcf().align_ylabels()
+    plt.savefig("output/figure3.pdf")
+    print("done.", flush=True)
+
 
 
 if __name__ == "__main__":
+    subprocess.run("./postprocess")
+
     conn = apsw.Connection("output/dnest5.db", flags=apsw.SQLITE_OPEN_READONLY)
     db = conn.cursor()
 
     figure_1(db)
     figure_2(db)
-    figure_3(particles)
+    figure_3(db)
     plt.show()
 
     conn.close()
