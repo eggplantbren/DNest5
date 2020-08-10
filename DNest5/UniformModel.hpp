@@ -3,8 +3,10 @@
 
 #include <cstring>
 #include <DNest5/Misc.hpp>
+#include <DNest5/Options.hpp>
 #include <DNest5/RNG.hpp>
 #include <map>
+#include <sstream>
 #include <string>
 
 namespace DNest5
@@ -37,6 +39,7 @@ class UniformModel
         virtual double perturb(RNG& rng) final;
         std::vector<char> to_blob() const;
         void from_blob(const std::vector<char>& vec);
+        std::string to_string() const;
 
         // Functions to be specified in the derived class
         virtual void us_to_params() = 0;
@@ -105,6 +108,20 @@ void UniformModel<num_params>::from_blob(const std::vector<char>& vec)
         std::memcpy(&xs[i], &vec[j], sizeof(double));
         j += chars_per_element;
     }
+}
+
+template<int num_params>
+std::string UniformModel<num_params>::to_string() const
+{
+    std::stringstream ss;
+    ss << std::setprecision(Options::stdout_precision);
+    for(int i=0; i<num_params; ++i)
+    {
+        ss << xs[i];
+        if(i < num_params - 1)
+            ss << ',';
+    }
+    return ss.str();
 }
 
 } // namespace

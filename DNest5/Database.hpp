@@ -4,11 +4,13 @@
 #include <deque>
 #include <DNest5/Misc.hpp>
 #include <DNest5/Options.hpp>
+#include <DNest5/RNG.hpp>
 #include <fstream>
 #include <functional>
 #include <iomanip>
 #include <iostream>
 #include <sqlite_modern_cpp/hdr/sqlite_modern_cpp.h>
+#include <sstream>
 #include <string>
 
 namespace DNest5
@@ -217,7 +219,7 @@ void postprocess()
             ++rank;
         };
 
-    // Prior times likelihood, posterior, information
+    // Prior times likelihood, posterior, information, etc
     std::vector<double> loghs(logms.size()), logps(logms.size());
     for(int i=0; i<int(logms.size()); ++i)
         loghs[i] = logms[i] + logls[i];
@@ -228,77 +230,87 @@ void postprocess()
     for(int i=0; i<int(loghs.size()); ++i)
     {
         double p = exp(logps[i]);
-        H += -p*logps[i];
+        H +=  p*(logps[i] - logms[i]);
     }
 
+    // Log-probs of full particles
+    std::vector<double> full_logps;
+    std::vector<int> full_pids;
+    for(int i=0; i<int(loghs.size()); ++i)
+    {
+        if(is_full[i])
+        {
+            full_logps.push_back(logps[i]);
+            full_pids.push_back(particle_ids[i]);
+        }
+    }
+    double tot = logsumexp(full_logps);
+    double ess = 0.0;
+    for(double& lp: full_logps)
+    {
+        lp -= tot;
+        ess += -exp(lp)*lp;
+    }
+    ess = exp(ess);
+    double max_logp_full = *max_element(full_logps.begin(), full_logps.end());
+
     // Save results
+    std::stringstream sout;
+    sout << std::setprecision(Options::stdout_precision);
+    sout << "# Results file written by DNest5\n";
+    sout << "---\n\n";
+    sout << "# Natural log of the marginal likelihood\n";
+    sout << "logz: " << logz << "\n\n";
+    sout << "# Prior-to-posterior Kullback-Leibler divergence, in nats\n";
+    sout << "info: " << H << "\n\n";
+    sout << "# Effective posterior sample size\n";
+    sout << "ess: " << int(ess) + 1 << "\n\n";
+
     std::fstream fout("output/results.yaml", std::ios::out);
-    fout << std::setprecision(14);
-    fout << "# Results file written by DNest5." << std::endl;
-    fout << "---\n";
-    fout << "logz: " << logz << std::endl;
-    fout << "info: " << H << std::endl;
+    fout << sout.str();
     fout.close();
 
     // And to stdout
-    std::cout << "---\n";
-    std::cout << std::setprecision(Options::stdout_precision);
-    std::cout << "logz: " << logz << std::endl;
-    std::cout << "info: " << H << std::endl;
+    std::cout << sout.str();
 
-/*
-    results = dict(logz=logsumexp([particles[pid]["logm"]\
-                                    + particles[pid]["logl"]\
-                                  for pid in particles]))
-
-    # Parallel lists
-    fp_ids = []
-    fp_logps = []
-
-    # Posterior weights and information
-    results["h"] = 0.0
-    for particle_id in particles:
-        particle = particles[particle_id]
-        particle["logp"] = particle["logm"] + particle["logl"] - results["logz"]
-        if particle["full"]:
-            fp_ids.append(particle_id)
-            fp_logps.append(particle["logp"])
-        results["h"] += np.exp(particle["logp"])*(particle["logl"] - results["logz"])
-    fp_ids = np.array(fp_ids)
-    fp_logps = np.array(fp_logps)
-
-    # Normalise
-    fp_logps -= logsumexp(fp_logps)
-    ess = np.exp(-np.sum(np.exp(fp_logps)*fp_logps))
-    top = np.max(fp_logps)
-    results["full_particle_ess"] = ess
-
-    # Generate posterior
-    conn2 = apsw.Connection("posterior.db")
-    db2 = conn2.cursor()
-    db2.execute("PRAGMA JOURNAL_MODE=OFF;")
-    db2.execute("PRAGMA SYNCHRONOUS=0;")
-    db2.execute("BEGIN;")
-    db2.execute("CREATE TABLE IF NOT EXISTS particles\
-                    (id     INTEGER NOT NULL PRIMARY KEY,\
-                     params BLOB NOT NULL);")
-    db2.execute("DELETE FROM particles;")
-    db2.execute("COMMIT;")
-    db2.execute("BEGIN;")
-    rng.seed(rng_seed)
-    saved = 0
-    while saved < int(ess) + 1:
-        k = rng.randint(fp_ids.size)
-        if rng.rand() <= np.exp(fp_logps[k] - top):
-            blob = db.execute("SELECT params FROM particles WHERE id = ?;",
-                              (int(fp_ids[k]), )).fetchone()[0]
-            db2.execute("INSERT INTO particles (params) VALUES (?);", (blob, ))
-            saved += 1
-    db2.execute("COMMIT;")
-    conn2.close()
-    print("Wrote posterior samples to posterior.db.")
-*/
-
+    // Get posterior samples and output as CSV
+    RNG rng; rng.set_seed(0);
+    std::cout << "Generating output/posterior.csv and output/posterior.db: ";
+    std::cout << std::flush;
+    int count = 0;
+    fout.open("output/posterior.csv", std::ios::out);
+    fout << std::setprecision(Options::stdout_precision);
+    T t(rng);
+    sqlite::database db("output/posterior.db");
+    db << "PRAGMA SYNCHRONOUS = 0;";
+    db << "PRAGMA JOURNAL_MODE = WAL;";
+    db << "BEGIN;";
+    db << "CREATE TABLE IF NOT EXISTS particles\
+            (id   INTEGER NOT NULL PRIMARY KEY,\
+             logp REAL NOT NULL,\
+             pid  INTEGER NOT NULL);";
+    db << "DELETE FROM particles;";
+    db << "COMMIT;";
+    db << "BEGIN;";
+    while(count < int(ess) + 1)
+    {
+        int k = rng.rand_int(full_pids.size());
+        if(rng.rand() <= exp(full_logps[k] - max_logp_full))
+        {
+            std::vector<char> blob;
+            reader << "SELECT params FROM particles WHERE id = ?;"
+                   << full_pids[k] >> blob;
+            t.from_blob(blob);
+            fout << t.to_string() << std::endl;
+            ++count;
+            db << "INSERT INTO particles (logp, pid) VALUES (?, ?);"
+               << full_logps[k] << full_pids[k];
+        }
+    };
+    db << "COMMIT;";
+    db << "VACUUM;";
+    db << "PRAGMA main.WAL_CHECKPOINT(TRUNCATE);";
+    std::cout << "done." << std::endl;
 }
 
 
