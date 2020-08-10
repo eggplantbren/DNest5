@@ -237,7 +237,15 @@ void postprocess()
 
             db << "INSERT INTO particles (id, logx, logm) VALUES (?, ?, ?);"
                << particle_id << logx << logms.back();
+
+            if(int(logxs.size()) == max_particle_id ||
+                int(logxs.size()) % 1000 == 0)
+            {
+                std::cout << "\rProcessed " << logxs.size() << " particles.";
+                std::cout << std::flush;
+            }
         };
+    std::cout << std::endl;
 
     // Prior times likelihood, posterior, information, etc
     std::vector<double> loghs(logms.size()), logps(logms.size());

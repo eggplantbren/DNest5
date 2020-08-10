@@ -1,17 +1,7 @@
 import apsw
-import json
 import matplotlib.pyplot as plt
 import numpy as np
-import numpy.random as rng
 import subprocess
-
-def logsumexp(ls):
-    top = np.max(ls)
-    return top + np.log(np.sum(np.exp(ls - top)))
-
-def logdiffexp(x, y):
-    ratio = np.exp(y - x)
-    return x + np.log(1.0 - ratio)
 
 def figure_1(db):
     """ The equivalent of DNest4's Figure 1. """
