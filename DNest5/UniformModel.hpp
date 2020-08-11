@@ -26,9 +26,6 @@ class UniformModel
         std::vector<double> us;
         std::vector<double> xs;
 
-        // This is the default naming scheme, but it may or may not be used
-        static const NamingScheme naming_scheme;
-
     public:
 
         // Default constructor sets up the vectors
@@ -48,6 +45,9 @@ class UniformModel
         // Functions to be specified in the derived class
         virtual void us_to_params() = 0;
         virtual double log_likelihood() const = 0;
+
+        // This is the default naming scheme, but it may or may not be used
+        static const NamingScheme naming_scheme;
 };
 
 /* Implementations follow */

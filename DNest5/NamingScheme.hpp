@@ -29,6 +29,9 @@ class NamingScheme
 
         // Get index
         int index(std::string&& name) const { return lookup.at(name); };
+
+        // CSV header text
+        std::string csv_header() const;
 };
 
 /* IMPLEMENTATIONS FOLLOW */
@@ -52,6 +55,18 @@ NamingScheme::NamingScheme(const std::vector<std::string>& _names)
 {
     for(int i=0; i<num_params; ++i)
         lookup.emplace(names[i], i);
+}
+
+std::string NamingScheme::csv_header() const
+{
+    std::stringstream ss;
+    for(int i=0; i<int(names.size()); ++i)
+    {
+        ss << names[i];
+        if(i < int(names.size())-1)
+            ss << ',';
+    }
+    return ss.str();
 }
 
 } // namespace

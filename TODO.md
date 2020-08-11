@@ -1,6 +1,5 @@
 # TODO LIST
 
-  * Output header line to posterior.csv
   * Tidy up stdout messages from showresults
   * Implement RJObject-type classes
   * Audit SQLite indexes
@@ -11,4 +10,7 @@
   * ABC mode (needed at postprocess only)
   * Postprocess command line arguments
 
+## DONE
+
+  * Output header line to posterior.csv
 

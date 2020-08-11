@@ -310,6 +310,7 @@ void postprocess()
     int count = 0;
     fout.open("output/posterior.csv", std::ios::out);
     fout << std::setprecision(Options::stdout_precision);
+    fout << T::naming_scheme.csv_header() << std::endl;
     T t(rng);
     db << "BEGIN;";
     while(count < int(ess) + 1)
