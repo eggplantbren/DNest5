@@ -10,7 +10,3 @@
   * ABC mode (needed at postprocess only)
   * Postprocess command line arguments
 
-## DONE
-
-  * Output header line to posterior.csv
-

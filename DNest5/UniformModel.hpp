@@ -3,7 +3,7 @@
 
 #include <cstring>
 #include <DNest5/Misc.hpp>
-#include <DNest5/NamingScheme.hpp>
+#include <DNest5/ParameterNames.hpp>
 #include <DNest5/Options.hpp>
 #include <DNest5/RNG.hpp>
 #include <map>
@@ -47,13 +47,13 @@ class UniformModel
         virtual double log_likelihood() const = 0;
 
         // This is the default naming scheme, but it may or may not be used
-        static const NamingScheme naming_scheme;
+        static const ParameterNames parameter_names;
 };
 
 /* Implementations follow */
 
 template<int num_params, typename T>
-const NamingScheme UniformModel<num_params, T>::naming_scheme(num_params);
+const ParameterNames UniformModel<num_params, T>::parameter_names(num_params);
 
 template<int num_params, typename T>
 UniformModel<num_params, T>::UniformModel(RNG& rng)
@@ -135,13 +135,13 @@ std::string UniformModel<num_params, T>::to_string() const
 template<int num_params, typename T>
 double& UniformModel<num_params, T>::param(std::string&& name)
 {
-    return xs[T::naming_scheme.index(std::move(name))];
+    return xs[T::parameter_names.index(std::move(name))];
 }
 
 template<int num_params, typename T>
 const double& UniformModel<num_params, T>::param(std::string&& name) const
 {
-    return xs[T::naming_scheme.index(std::move(name))];
+    return xs[T::parameter_names.index(std::move(name))];
 }
 
 } // namespace

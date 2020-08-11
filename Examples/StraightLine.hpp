@@ -26,7 +26,7 @@ class StraightLine : public UniformModel<3, StraightLine>
         static void load_data(const char* filename);
 
         // Naming scheme
-        static const NamingScheme naming_scheme;
+        static const ParameterNames parameter_names;
 
         StraightLine(RNG& rng);
         void us_to_params();
@@ -55,7 +55,7 @@ void StraightLine::load_data(const char* filename)
 }
 
 // Define parameter names
-const NamingScheme StraightLine::naming_scheme({"m", "b", "sigma"});
+const ParameterNames StraightLine::parameter_names({"m", "b", "sigma"});
 
 StraightLine::StraightLine(RNG& rng)
 :UniformModel(rng)

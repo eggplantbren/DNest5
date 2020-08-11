@@ -1,5 +1,5 @@
-#ifndef DNest5_NamingScheme_hpp
-#define DNest5_NamingScheme_hpp
+#ifndef DNest5_ParameterNames_hpp
+#define DNest5_ParameterNames_hpp
 
 #include <map>
 #include <sstream>
@@ -11,7 +11,7 @@ namespace DNest5
 
 /* A naming scheme for the parameters of a UniformModel */
 
-class NamingScheme
+class ParameterNames
 {
     private:
 
@@ -22,10 +22,10 @@ class NamingScheme
     public:
 
         // Create a default naming scheme
-        NamingScheme(int _num_params);
+        ParameterNames(int _num_params);
 
         // Create a naming scheme with the given names
-        NamingScheme(const std::vector<std::string>& _names);
+        ParameterNames(const std::vector<std::string>& _names);
 
         // Get index
         int index(std::string&& name) const { return lookup.at(name); };
@@ -36,7 +36,7 @@ class NamingScheme
 
 /* IMPLEMENTATIONS FOLLOW */
 
-NamingScheme::NamingScheme(int _num_params)
+ParameterNames::ParameterNames(int _num_params)
 :num_params(_num_params)
 {
     names.reserve(num_params);
@@ -49,7 +49,7 @@ NamingScheme::NamingScheme(int _num_params)
     }
 }
 
-NamingScheme::NamingScheme(const std::vector<std::string>& _names)
+ParameterNames::ParameterNames(const std::vector<std::string>& _names)
 :num_params(_names.size())
 ,names(_names)
 {
@@ -57,7 +57,7 @@ NamingScheme::NamingScheme(const std::vector<std::string>& _names)
         lookup.emplace(names[i], i);
 }
 
-std::string NamingScheme::csv_header() const
+std::string ParameterNames::csv_header() const
 {
     std::stringstream ss;
     for(int i=0; i<int(names.size()); ++i)
