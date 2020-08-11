@@ -3,6 +3,7 @@
 
 #include <cstring>
 #include <DNest5/Misc.hpp>
+#include <DNest5/NamingScheme.hpp>
 #include <DNest5/Options.hpp>
 #include <DNest5/RNG.hpp>
 #include <map>
@@ -16,7 +17,7 @@ namespace DNest5
     Derive from this class to implement models using an underlying
     set of coordinates with Uniform(0, 1) priors.
 */
-template<int num_params>
+template<int num_params, typename T>
 class UniformModel
 {
     protected:
@@ -24,6 +25,9 @@ class UniformModel
         // Underlying coordinates and their transformed version
         std::vector<double> us;
         std::vector<double> xs;
+
+        // This is the default naming scheme, but it may or may not be used
+        static const NamingScheme naming_scheme;
 
     public:
 
@@ -37,6 +41,10 @@ class UniformModel
         void from_blob(const std::vector<char>& vec);
         std::string to_string() const;
 
+        // Access parameters by name
+        virtual double& param(std::string&& name);
+        virtual const double& param(std::string&& name) const;
+
         // Functions to be specified in the derived class
         virtual void us_to_params() = 0;
         virtual double log_likelihood() const = 0;
@@ -44,8 +52,11 @@ class UniformModel
 
 /* Implementations follow */
 
-template<int num_params>
-UniformModel<num_params>::UniformModel(RNG& rng)
+template<int num_params, typename T>
+const NamingScheme UniformModel<num_params, T>::naming_scheme(num_params);
+
+template<int num_params, typename T>
+UniformModel<num_params, T>::UniformModel(RNG& rng)
 :us(num_params)
 ,xs(num_params)
 {
@@ -53,8 +64,8 @@ UniformModel<num_params>::UniformModel(RNG& rng)
         u = rng.rand();
 }
 
-template<int num_params>
-double UniformModel<num_params>::perturb(RNG& rng)
+template<int num_params, typename T>
+double UniformModel<num_params, T>::perturb(RNG& rng)
 {
     int num = 1;
     if(rng.rand() <= 0.5)
@@ -72,8 +83,8 @@ double UniformModel<num_params>::perturb(RNG& rng)
 }
 
 
-template<int num_params>
-std::vector<char> UniformModel<num_params>::to_blob() const
+template<int num_params, typename T>
+std::vector<char> UniformModel<num_params, T>::to_blob() const
 {
     // Could just return xs, but writing this in full
     // to show how it would be done if the parameter space were
@@ -91,8 +102,8 @@ std::vector<char> UniformModel<num_params>::to_blob() const
 }
 
 
-template<int num_params>
-void UniformModel<num_params>::from_blob(const std::vector<char>& vec)
+template<int num_params, typename T>
+void UniformModel<num_params, T>::from_blob(const std::vector<char>& vec)
 {
     int chars_per_element = sizeof(double)/sizeof(char);
     int chars_needed = xs.size()*chars_per_element;
@@ -106,8 +117,8 @@ void UniformModel<num_params>::from_blob(const std::vector<char>& vec)
     }
 }
 
-template<int num_params>
-std::string UniformModel<num_params>::to_string() const
+template<int num_params, typename T>
+std::string UniformModel<num_params, T>::to_string() const
 {
     std::stringstream ss;
     ss << std::setprecision(Options::stdout_precision);
@@ -118,6 +129,19 @@ std::string UniformModel<num_params>::to_string() const
             ss << ',';
     }
     return ss.str();
+}
+
+
+template<int num_params, typename T>
+double& UniformModel<num_params, T>::param(std::string&& name)
+{
+    return xs[T::naming_scheme.index(std::move(name))];
+}
+
+template<int num_params, typename T>
+const double& UniformModel<num_params, T>::param(std::string&& name) const
+{
+    return xs[T::naming_scheme.index(std::move(name))];
 }
 
 } // namespace

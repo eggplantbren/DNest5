@@ -8,7 +8,9 @@
 namespace DNest5
 {
 
-class StraightLine:public UniformModel<3>
+// The "Curiously Recursive" template argument is so that the correct
+// naming scheme is used.
+class StraightLine : public UniformModel<3, StraightLine>
 {
     private:
 
@@ -23,6 +25,9 @@ class StraightLine:public UniformModel<3>
         // Data loader
         static void load_data(const char* filename);
 
+        // Naming scheme
+        static const NamingScheme naming_scheme;
+
         StraightLine(RNG& rng);
         void us_to_params();
         double log_likelihood() const;
@@ -30,6 +35,7 @@ class StraightLine:public UniformModel<3>
 
 /* Implementations follow */
 
+// Data and its loading
 std::vector<double> StraightLine::data_xs;
 std::vector<double> StraightLine::data_ys;
 void StraightLine::load_data(const char* filename)
@@ -48,18 +54,22 @@ void StraightLine::load_data(const char* filename)
     std::cout << filename << "." << std::endl;
 }
 
+// Define parameter names
+const NamingScheme StraightLine::naming_scheme({"m", "b", "sigma"});
 
 StraightLine::StraightLine(RNG& rng)
 :UniformModel(rng)
 {
     us_to_params();
+    if(data_xs.size() == 0)
+        load_data("Examples/road.txt");
 }
 
 void StraightLine::us_to_params()
 {
-    params["m"] = 1000.0*qnorm(us[0]);
-    params["b"] = 1000.0*qnorm(us[1]);
-    params["sigma"] = exp(5.0*us[2]);
+    param("m") = 1000.0*qnorm(us[0]);
+    param("b") = 1000.0*qnorm(us[1]);
+    param("sigma") = exp(5.0*us[2]);
 }
 
 double StraightLine::qnorm(double p)
@@ -71,12 +81,12 @@ double StraightLine::log_likelihood() const
 {
     double logl = 0.0;
 
-    double var = pow(params.at("sigma"), 2);
+    double var = pow(param("sigma"), 2);
     double tau = 1.0/var;
     double c = -0.5*log(2.0*M_PI*var);
     for(int i=0; i<int(data_xs.size()); ++i)
     {
-        double mu = params.at("m")*data_xs[i] + params.at("b");
+        double mu = param("m")*data_xs[i] + param("b");
         logl += c - 0.5*tau*pow(data_ys[i] - mu, 2);
     }
 

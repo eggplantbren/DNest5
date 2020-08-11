@@ -143,6 +143,8 @@ Sampler<T>::Sampler(Options _options)
     std::cout << "from the prior..." << std::flush;
     particles.reserve(options.num_particles);
     auto& rng = rngs[0];
+    // Always generate from the prior serially - so classes can assume that
+    // e.g., static data can be loaded in a constructor
     for(int i=0; i<options.num_particles; ++i)
     {
         int level = 0;

@@ -6,7 +6,7 @@
 namespace DNest5
 {
 
-class SpikeSlab:public UniformModel<20>
+class SpikeSlab : public UniformModel<20, SpikeSlab>
 {
     private:
 

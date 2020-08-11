@@ -1,12 +1,12 @@
 #ifndef DNest5_ModelType_hpp
 #define DNest5_ModelType_hpp
 
-#include <Examples/SpikeSlab.hpp>
+#include <Examples/StraightLine.hpp>
 
 namespace DNest5
 {
 
-using ModelType = SpikeSlab;
+using ModelType = StraightLine;
 
 } // namespace
 
