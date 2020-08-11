@@ -6,5 +6,7 @@ DNest5
 Dependencies
 ============
 
+* boost
+* Python 3, NumPy, matplotlib, apsw
 * SQLite3
 * yaml-cpp
