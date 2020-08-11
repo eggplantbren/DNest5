@@ -307,7 +307,7 @@ void postprocess()
     fout.close();
 
     // And to stdout
-    std::cout << sout.str();
+    std::cout << sout.str() << std::endl;
 
     // Get posterior samples and output as CSV
     RNG rng; rng.set_seed(0);
