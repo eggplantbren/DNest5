@@ -1,6 +1,5 @@
 # TODO LIST
 
-  * Tidy up stdout messages from showresults
   * Implement RJObject-type classes
   * Audit SQLite indexes
   * Save sampler state to database

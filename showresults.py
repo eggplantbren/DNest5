@@ -106,10 +106,13 @@ if __name__ == "__main__":
     conn = apsw.Connection("output/dnest5.db", flags=apsw.SQLITE_OPEN_READONLY)
     db = conn.cursor()
 
+    print("----------------")
+    print("Creating figures")
+    print("----------------", flush=True)
     figure_1(db)
     figure_2(db)
     figure_3(db)
-    plt.show()
-
     conn.close()
+    print("----------------", flush=True)
+    plt.show()
 

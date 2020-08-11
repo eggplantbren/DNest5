@@ -50,8 +50,6 @@ void StraightLine::load_data(const char* filename)
         data_ys.push_back(y);
     }
     fin.close();
-    std::cout << "Loaded " << data_xs.size() << " data points from ";
-    std::cout << filename << "." << std::endl;
 }
 
 // Define parameter names

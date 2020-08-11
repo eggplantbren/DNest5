@@ -157,6 +157,7 @@ int Database::num_full_particles(int sampler_id)
 template<typename T>
 void postprocess()
 {
+    std::cout << "--------------------\n";
     std::cout << "Begin postprocessing\n";
     std::cout << "--------------------\n" << std::endl;
 
@@ -245,8 +246,9 @@ void postprocess()
                 std::cout << std::flush;
             }
         };
-    std::cout << std::endl;
+    std::cout << '\n' << std::endl;
 
+    std::cout << "Computing results..." << std::flush;
     // Prior times likelihood, posterior, information, etc
     std::vector<double> loghs(logms.size()), logps(logms.size());
     for(int i=0; i<int(logms.size()); ++i)
@@ -285,6 +287,8 @@ void postprocess()
     }
     ess = exp(ess);
     double max_logp_full = *max_element(full_logps.begin(), full_logps.end());
+    std::cout << "done.\n" << std::endl;
+    std::cout << "--------------------------------" << std::endl;
 
     // Save results
     std::stringstream sout;
@@ -296,7 +300,7 @@ void postprocess()
     sout << "# Prior-to-posterior Kullback-Leibler divergence, in nats\n";
     sout << "info: " << H << "\n\n";
     sout << "# Effective posterior sample size (full particles)\n";
-    sout << "ess: " << int(ess) + 1 << "\n\n";
+    sout << "ess: " << int(ess) + 1 << std::endl;
 
     std::fstream fout("output/results.yaml", std::ios::out);
     fout << sout.str();
@@ -329,9 +333,6 @@ void postprocess()
     db << "COMMIT;";
     db << "VACUUM;";
     db << "PRAGMA main.WAL_CHECKPOINT(TRUNCATE);";
-
-    std::cout << "--------------------\n";
-    std::cout << "Finished." << std::endl;
 }
 
 
