@@ -25,18 +25,14 @@ class UniformModel
         std::vector<double> us;
         std::vector<double> xs;
 
-        // As an alternative to xs, here is a map from strings
-        // (parameter names) to values (parameter values). Use one or the other.
-        std::map<std::string, double> params;
-
     public:
 
         // Default constructor sets up the vectors
         UniformModel(RNG& rng);
         virtual ~UniformModel() = default;
 
-        // Functions specified here
-        virtual double perturb(RNG& rng) final;
+        // Functions specified here and not to be overridden
+        double perturb(RNG& rng);
         std::vector<char> to_blob() const;
         void from_blob(const std::vector<char>& vec);
         std::string to_string() const;
