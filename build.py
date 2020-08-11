@@ -48,7 +48,7 @@ makefile = open("Makefile", "w")
 makefile.write(f"""CXX = g++
 FLAGS = -std=c++17
 INCLUDE = -I .
-OPTIM = -O3 -march=native -DNDEBUG
+OPTIM = -O3 -march=native
 WARN = -Wall -Wextra -pedantic
 LINK = -lpthread -lsqlite3 -lyaml-cpp
 ALL = $(FLAGS) $(INCLUDE) $(WARN) $(OPTIM)\n\n""")
