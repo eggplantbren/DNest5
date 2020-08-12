@@ -3,6 +3,11 @@ DNest5
 
 (c) 2020 Brendon J. Brewer.
 
+Please Clone Recursively
+========================
+
+`git clone --recursive https://github.com/eggplantbren/DNest5`
+
 LICENCE
 =======
 
@@ -11,7 +16,7 @@ I have not decided on a licence yet. Until I do, you may download and use
 request that you contribute any significant modifications back to this
 repository via a pull request.
 
-All other rights are reserved (for now).
+**All other rights are reserved (for now).**
 
 Dependencies
 ============
