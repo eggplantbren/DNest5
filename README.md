@@ -6,7 +6,9 @@ DNest5
 Please Clone Recursively
 ========================
 
-`git clone --recursive https://github.com/eggplantbren/DNest5`
+`$ git clone --recursive https://github.com/eggplantbren/DNest5`
+
+This will pull in a submodule that I'm using.
 
 LICENCE
 =======
