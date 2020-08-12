@@ -1,7 +1,6 @@
 #ifndef DNest5_StraightLine_hpp
 #define DNest5_StraightLine_hpp
 
-#include <boost/math/special_functions/erf.hpp>
 #include <DNest5/UniformModel.hpp>
 #include <fstream>
 
@@ -16,9 +15,6 @@ class StraightLine : public UniformModel<3, StraightLine>
 
         // The data
         static std::vector<double> data_xs, data_ys;
-
-        // Quantile function of standard normal
-        static double qnorm(double p);
 
     public:
 
@@ -68,11 +64,6 @@ void StraightLine::us_to_params()
     param("m") = 1000.0*qnorm(us[0]);
     param("b") = 1000.0*qnorm(us[1]);
     param("sigma") = exp(5.0*us[2]);
-}
-
-double StraightLine::qnorm(double p)
-{
-    return sqrt(2.0)*boost::math::erf_inv(2.0*p - 1.0);
 }
 
 double StraightLine::log_likelihood() const
