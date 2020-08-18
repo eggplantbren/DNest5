@@ -273,7 +273,8 @@ void postprocess()
     for(int i=0; i<int(loghs.size()); ++i)
     {
         double p = exp(logps[i]);
-        H +=  p*(logps[i] - logms[i]);
+        if(p > 0.0)
+            H +=  p*(logps[i] - logms[i]);
     }
 
     // Log-probs of full particles
