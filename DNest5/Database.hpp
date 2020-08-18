@@ -293,7 +293,9 @@ void postprocess()
     for(double& lp: full_logps)
     {
         lp -= tot;
-        ess += -exp(lp)*lp;
+        double p = exp(lp);
+        if(p > 0.0)
+            ess += -p*lp;
     }
     ess = exp(ess);
     double max_logp_full = *max_element(full_logps.begin(), full_logps.end());
