@@ -6,7 +6,7 @@
 namespace DNest5
 {
 
-class Rosenbrock : public UniformModel<50>
+class Rosenbrock : public UniformModel<50, Rosenbrock>
 {
     private:
 
