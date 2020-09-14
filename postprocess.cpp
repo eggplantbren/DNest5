@@ -1,6 +1,5 @@
 #include <DNest5/Database.hpp>
-#include <DNest5/ModelType.hpp>
-#include <iostream>
+#include <ModelType.hpp>
 
 using namespace DNest5;
 

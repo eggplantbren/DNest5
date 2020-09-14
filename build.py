@@ -3,7 +3,7 @@ import os
 import subprocess
 
 BUILD_DIR = ".build"
-HPP_DIRS = ["DNest5", "Examples"]
+HPP_DIRS = ["DNest5", "Examples", "."]
 
 def find_dependencies(source_file, source_files):
     """
