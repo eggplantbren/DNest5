@@ -33,7 +33,6 @@ class Database
 
     public:
         Database();
-        ~Database();
 
         int num_full_particles(int sampler_id);
 
@@ -56,14 +55,7 @@ Database::Database()
     create_indexes();
     create_views();
     db << "COMMIT;";
-}
-
-Database::~Database()
-{
-    std::cout << "Tidying up database..." << std::flush;
     db << "VACUUM;";
-    db << "PRAGMA main.WAL_CHECKPOINT(TRUNCATE);";
-    std::cout << "done." << std::endl;
 }
 
 void Database::pragmas()
@@ -343,8 +335,6 @@ void postprocess()
         }
     };
     db << "COMMIT;";
-    db << "VACUUM;";
-    db << "PRAGMA main.WAL_CHECKPOINT(TRUNCATE);";
 }
 
 
