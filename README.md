@@ -51,7 +51,7 @@ to run `showresults.py` while `main` is still running.
 Compiling a Different Model
 ===========================
 
-Edit `DNest5/ModelType.hpp` and change the `#include` and `using` lines
+Edit `ModelType.hpp` and change the `#include` and `using` lines
 to point to a different model. Then run `./build.py` again.
 
 At this time, all example models in the `Example` directory are implemented
