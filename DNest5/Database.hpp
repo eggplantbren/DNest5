@@ -180,6 +180,7 @@ void postprocess()
      logp REAL);";
     db << "DELETE FROM particles;";
     db << "COMMIT;";
+    db << "VACUUM;";
 
     // Get maximum particle ID and number of levelsand use it for truncation
     int max_particle_id, num_levels;
