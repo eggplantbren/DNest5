@@ -1,3 +1,6 @@
 [submodule "sqlite_modern_cpp"]
 	path = sqlite_modern_cpp
 	url = https://github.com/SqliteModernCpp/sqlite_modern_cpp
+[submodule "Tools"]
+	path = Tools
+	url = https://github.com/eggplantbren/Tools
