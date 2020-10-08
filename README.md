@@ -13,12 +13,7 @@ This will pull in a submodule that I'm using.
 LICENCE
 =======
 
-I have not decided on a licence yet. Until I do, you may download and use
-`DNest5` for any non-commercial purpose. You may also modify it but I would
-request that you contribute any significant modifications back to this
-repository via a pull request.
-
-**All other rights are reserved (for now).**
+GNU General Public License version 3.
 
 Dependencies
 ============
