@@ -2,14 +2,17 @@
 #define DNest5_Levels_hpp
 
 #include <algorithm>
-#include <DNest5/Misc.hpp>
 #include <DNest5/Particle.hpp>
 #include <DNest5/Options.hpp>
 #include <optional>
+#include <Tools/Misc.hpp>
 #include <vector>
 
 namespace DNest5
 {
+
+// Using declarations
+using Tools::minus_infinity;
 
 /* Manage all levels in a pseudo-database here. */
 class Levels

@@ -2,9 +2,7 @@
 #define DNest5_Database_hpp
 
 #include <deque>
-#include <DNest5/Misc.hpp>
 #include <DNest5/Options.hpp>
-#include <DNest5/RNG.hpp>
 #include <fstream>
 #include <functional>
 #include <iomanip>
@@ -12,9 +10,17 @@
 #include <sqlite_modern_cpp/hdr/sqlite_modern_cpp.h>
 #include <sstream>
 #include <string>
+#include <Tools/Misc.hpp>
+#include <Tools/RNG.hpp>
 
 namespace DNest5
 {
+
+// Using declarations
+using Tools::logdiffexp;
+using Tools::logsumexp;
+using Tools::minus_infinity;
+using Tools::RNG;
 
 // A postprocessing function
 template<typename T>

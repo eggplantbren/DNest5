@@ -2,16 +2,19 @@
 #define DNest5_UniformModel_hpp
 
 #include <cstring>
-#include <DNest5/Misc.hpp>
 #include <DNest5/ParameterNames.hpp>
 #include <DNest5/Options.hpp>
-#include <DNest5/RNG.hpp>
 #include <map>
 #include <sstream>
 #include <string>
+#include <Tools/Misc.hpp>
+#include <Tools/RNG.hpp>
 
 namespace DNest5
 {
+
+// Using declarations
+using Tools::logsumexp, Tools::RNG, Tools::qnorm, Tools::wrap;
 
 /*
     Derive from this class to implement models using an underlying

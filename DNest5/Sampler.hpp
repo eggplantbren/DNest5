@@ -1,19 +1,22 @@
 #ifndef DNest5_Sampler_hpp
 #define DNest5_Sampler_hpp
 
-#include <DNest5/Barrier.hpp>
 #include <DNest5/Database.hpp>
 #include <DNest5/Levels.hpp>
 #include <DNest5/Options.hpp>
 #include <DNest5/Particle.hpp>
-#include <DNest5/RNG.hpp>
 #include <memory>
 #include <mutex>
 #include <thread>
+#include <Tools/Barrier.hpp>
+#include <Tools/RNG.hpp>
 #include <vector>
 
 namespace DNest5
 {
+
+// Using declarations
+using Tools::Barrier, Tools::RNG, Tools::wrap;
 
 /* The sampler class */
 template<typename T>
