@@ -99,8 +99,7 @@ def figure_3(db):
     print("done.", flush=True)
 
 
-
-if __name__ == "__main__":
+def standard_results():
     subprocess.run("./postprocess")
 
     conn = apsw.Connection("output/dnest5.db", flags=apsw.SQLITE_OPEN_READONLY)
@@ -115,4 +114,7 @@ if __name__ == "__main__":
     conn.close()
     print("------------------------", flush=True)
     plt.show()
+
+if __name__ == "__main__":
+    standard_results()
 
