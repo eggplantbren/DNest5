@@ -4,4 +4,6 @@ main
 Makefile
 postprocess
 __pycache__
+Template/output/*
 .test_accuracy_output.csv
+
