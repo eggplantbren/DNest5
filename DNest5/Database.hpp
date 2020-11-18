@@ -188,15 +188,15 @@ void postprocess()
     db << "COMMIT;";
     db << "VACUUM;";
 
-    // Get maximum particle ID and number of levelsand use it for truncation
-    int max_particle_id, num_levels;
+    // Get maximum particle ID and number of levels and use it for truncation
+    int max_particle_id, max_level_id;
     reader << "SELECT MAX(id) FROM particles;" >> max_particle_id;
-    reader << "SELECT COUNT(id) FROM levels;" >> num_levels;
+    reader << "SELECT MAX(id) FROM levels;" >> max_level_id;
 
     // Load levels into a vector
     std::vector<double> level_logxs, level_num_particles;
     reader << "SELECT logx, num_particles\
-               FROM levels l INNER JOIN particles_per_level ppl\
+               FROM levels l LEFT JOIN particles_per_level ppl\
                ON l.id = ppl.level;" >>
         [&](double logx, int n)
         {
@@ -221,9 +221,9 @@ void postprocess()
     reader << "SELECT p.id, llp.level, p.logl, p.params IS NOT NULL\
                             FROM particles p INNER JOIN\
                             levels_leq_particles llp ON p.id=llp.particle\
-                            WHERE p.id <= ? AND llp.level < ?\
+                            WHERE p.id <= ? AND llp.level <= ?\
                             ORDER BY llp.level, logl, tb;"
-       << max_particle_id << num_levels >>
+       << max_particle_id << max_level_id >>
         [&](int particle_id, int level, double logl, bool full)
         {
             if(level != old_level)
@@ -237,9 +237,10 @@ void postprocess()
                                     - log(level_num_particles[level]));
             logls.push_back(logl);
 
-            // X_particle = X_level - (rank+0.5)*M_particles
+            // X_particle = X_level - (rank+0.5)*N_level * M_level
             double logx = logdiffexp(level_logxs[level],
-                                     log(rank + 0.5) + logms.back());
+                                     log((rank + 0.5)/level_num_particles[level])
+                                         + level_logms[level]);
             logxs.emplace_back(logx);
             is_full.push_back(full);
             ++rank;
