@@ -87,6 +87,13 @@ def figure_3(db):
     top=s[-1] + 0.05*(s[-1] - bottom)
     plt.ylim([bottom, top])
 
+    # Now add levels
+    levels = []
+    for row in db.execute("SELECT logx, logl FROM levels;"):
+        levels.append(row)
+    levels = np.array(levels)
+    plt.plot(levels[:,0], levels[:,1], "ko", markersize=2, label="Levels")
+
     plt.subplot(2, 1, 2)
     plt.plot(logxs, np.exp(logps - logps.max()), alpha=0.6)
     plt.xlabel("log(X)")
