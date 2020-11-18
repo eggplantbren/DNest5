@@ -63,7 +63,7 @@ void StraightLine::us_to_params()
 {
     param("m") = 1000.0*qnorm(us[0]);
     param("b") = 1000.0*qnorm(us[1]);
-    param("sigma") = exp(5.0*us[2]);
+    param("sigma") = exp(-10.0 + 20.0*us[2]);
 }
 
 double StraightLine::log_likelihood() const
