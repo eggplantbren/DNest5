@@ -56,8 +56,8 @@ Database::Database()
 
     pragmas();
     db << "BEGIN;";
-    create_tables();
     clear_previous();
+    create_tables();
     create_indexes();
     create_views();
     db << "COMMIT;";
@@ -146,10 +146,10 @@ SELECT p.id particle,\n\
 
 void Database::clear_previous()
 {
-    db << "DELETE FROM samplers;";
-    db << "DELETE FROM particles;";
-    db << "DELETE FROM levels;";
-    db << "DELETE FROM rngs;";
+    db << "DROP TABLE IF EXISTS samplers;";
+    db << "DROP TABLE IF EXISTS particles;";
+    db << "DROP TABLE IF EXISTS levels;";
+    db << "DROP TABLE IF EXISTS rngs;";
 }
 
 int Database::num_full_particles(int sampler_id)
