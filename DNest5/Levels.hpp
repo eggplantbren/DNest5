@@ -178,9 +178,8 @@ void Levels::revise()
     {
         double e = exceeds[i-1];
         double v = visits[i-1];
-
-        double numerator   = e + exp(-1.0)*options.new_level_interval;
-        double denominator = v + options.new_level_interval;
+        double numerator   = e + 100.0*exp(-1.0);
+        double denominator = v + 100.0;
         logxs[i] = logxs[i-1] + log(numerator/denominator);
     }
 }

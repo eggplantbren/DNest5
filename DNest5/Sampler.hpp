@@ -306,11 +306,15 @@ void Sampler<T>::save_levels()
         a = levels.get_accepts(i); t = levels.get_tries(i);
 
         // Upsert each level
-        db << "INSERT INTO levels VALUES (?, ?, ?, ?, ?, ?, ?, ?)\
+        db << "INSERT INTO levels\
+               (id, logx, logl, tb, exceeds, visits, accepts, tries)\
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)\
                ON CONFLICT (id) DO UPDATE\
-               SET (exceeds, visits, accepts, tries) = (?, ?, ?, ?);"
+               SET (logx, exceeds, visits, accepts, tries) = \
+               (excluded.logx, excluded.exceeds, excluded.visits, \
+                excluded.accepts, excluded.tries);"
            << i << levels.get_logx(i) << logl << tb
-           << e << v << a << t << e << v << a << t;
+           << e << v << a << t;
     }
 }
 
@@ -417,8 +421,8 @@ void Sampler<T>::metropolis_step_level(int k, int thread)
     // Beta part
     if(!levels.get_push_is_active())
     {
-        loga += options.beta*(log(1 + levels_copies[thread].get_tries(level))
-                    - log(1 + levels_copies[thread].get_tries(level_prop)));
+        loga += options.beta*(log(100 + levels_copies[thread].get_tries(level))
+                    - log(100 + levels_copies[thread].get_tries(level_prop)));
     }
 
     // Accept
