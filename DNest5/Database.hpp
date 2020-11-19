@@ -259,6 +259,19 @@ void postprocess(const CommandLineOptions& options)
     std::cout << '\n' << std::endl;
 
     std::cout << "Computing results..." << std::flush;
+
+    // For ABC, replace log likelihoods
+    if(options.get_abc())
+    {
+        for(size_t i=0; i<logls.size(); ++i)
+        {
+            if(i < options.get_abc_fraction()*logls.size())
+                logls[i] = minus_infinity;
+            else
+                logls[i] = -logms[i];
+        }
+    }
+
     // Prior times likelihood, posterior, information, etc
     std::vector<double> loghs(logms.size()), logps(logms.size());
     for(int i=0; i<int(logms.size()); ++i)

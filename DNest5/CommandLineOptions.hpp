@@ -11,14 +11,15 @@ namespace DNest5
 {
 
 /*
-* A little class containing all of the command line options.
-* Uses GNU GetOpt to parse the input.
+* Command Line Options for postprocessing
 */
 
 class CommandLineOptions
 {
 	private:
         double temperature;
+        bool abc;
+        double abc_fraction;
 
 	public:
         // Construct
@@ -28,8 +29,9 @@ class CommandLineOptions
 		void print_help() const;
 
         // Getters
-        double get_temperature() const { return temperature; }
-
+        inline double get_temperature() const { return temperature; }
+        inline bool get_abc() const { return abc; }
+        inline double get_abc_fraction() const { return abc_fraction; }
 };
 
 
@@ -40,18 +42,27 @@ class CommandLineOptions
 
 CommandLineOptions::CommandLineOptions(int argc, char** argv)
 :temperature(1.0)
+,abc(false)
+,abc_fraction(0.8)
 {
 	int c;
 	std::stringstream ss;
 
 	opterr = 0;
-	while((c = getopt(argc, argv, "ht:")) != -1)
+	while((c = getopt(argc, argv, "haf:t:")) != -1)
     {
 	    switch(c)
 	    {
 		    case 'h':
 			    print_help();
 			    break;
+            case 'a':
+                abc = true;
+                break;
+            case 'f':
+                ss << optarg;
+                ss >> abc_fraction;
+                break;
             case 't':
                 ss << optarg;
                 ss >> temperature;
@@ -71,12 +82,19 @@ CommandLineOptions::CommandLineOptions(int argc, char** argv)
 	for(int index = optind; index < argc; index++)
 		std::cerr << "# Non-option argument " << argv[index] << std::endl;
 
+    if(abc && temperature != 1.0)
+        std::cerr << "Temperature option has no effect in ABC mode." << std::endl;
+
+    if(!abc && abc_fraction != 0.8)
+        std::cerr << "abc_fraction only has an effect in ABC mode." << std::endl;
 }
 
 void CommandLineOptions::print_help() const
 {
     std::cout << "Command line options for postprocessing:" << std::endl;
-    std::cout << "-t <temperature>     (default=1.0)" << std::endl;
+    std::cout << "    -t <temperature>     (default=1.0)" << std::endl;
+    std::cout << "    -a                   (ABC mode)" << std::endl;
+    std::cout << "    -f <abc_fraction>    (default=0.8)" << std::endl;
     exit(0);
 }
 
