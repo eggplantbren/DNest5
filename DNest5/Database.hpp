@@ -2,6 +2,7 @@
 #define DNest5_Database_hpp
 
 #include <deque>
+#include <DNest5/CommandLineOptions.hpp>
 #include <DNest5/Options.hpp>
 #include <fstream>
 #include <functional>
@@ -24,7 +25,7 @@ using Tools::RNG;
 
 // A postprocessing function
 template<typename T>
-void postprocess();
+void postprocess(const CommandLineOptions& options);
 
 /* Create and manage the output database */
 class Database
@@ -161,7 +162,7 @@ int Database::num_full_particles(int sampler_id)
 }
 
 template<typename T>
-void postprocess()
+void postprocess(const CommandLineOptions& options)
 {
     std::cout << "--------------------\n";
     std::cout << "Begin postprocessing\n";
@@ -235,7 +236,7 @@ void postprocess()
             particle_ids.push_back(particle_id);
             logms.emplace_back(level_logms[level]
                                     - log(level_num_particles[level]));
-            logls.push_back(logl);
+            logls.push_back(logl / options.get_temperature());
 
             // X_particle = X_level - (rank+0.5)*N_level * M_level
             double logx = logdiffexp(level_logxs[level],

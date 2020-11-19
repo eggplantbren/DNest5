@@ -1,7 +1,10 @@
+#!/usr/bin/env python
+
 import apsw
 import matplotlib.pyplot as plt
 import numpy as np
 import subprocess
+import sys
 
 def figure_1(db):
     """ The equivalent of DNest4's Figure 1. """
@@ -106,8 +109,10 @@ def figure_3(db):
     print("done.", flush=True)
 
 
-def standard_results():
-    subprocess.run("./postprocess")
+def standard_results(argv):
+    # The subprocess will have the same command line arguments
+    argv[0] = "./postprocess"
+    subprocess.run(argv, shell=False)
 
     conn = apsw.Connection("output/dnest5.db", flags=apsw.SQLITE_OPEN_READONLY)
     db = conn.cursor()
@@ -123,5 +128,5 @@ def standard_results():
     plt.show()
 
 if __name__ == "__main__":
-    standard_results()
+    standard_results(sys.argv)
 
