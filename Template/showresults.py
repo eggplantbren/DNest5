@@ -9,5 +9,5 @@ f.close()
 if __name__ == "__main__":
     sys.path.insert(0, dnest5_dir)
     import showresults as sr
-    sr.standard_results()
+    sr.standard_results(sys.argv)
 
