@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 
 def plot_data():
-    data = np.loadtxt("Examples/road.txt")
+    data = np.loadtxt("road.txt")
     plt.plot(data[:,0], data[:,1], "o", alpha=0.8)
 
 
@@ -12,7 +12,7 @@ def plot_lines():
     Plot up to 100 lines from the posterior distribution.
     """
     x = np.linspace(0.0, 100.0, 101)
-    params = pd.read_csv("output/posterior.csv")
+    params = pd.read_csv("../output/posterior.csv")
     num = min(params.shape[0], 100)
     for i in range(num):
         row = params.iloc[i, :]

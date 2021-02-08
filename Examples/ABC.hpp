@@ -3,7 +3,7 @@
 
 #include <algorithm>
 #include <cstring>
-#include <DNest5/ParameterNames.hpp>
+#include "ParameterNames.h"
 #include <fstream>
 #include <sstream>
 #include <string>
@@ -25,12 +25,12 @@ class ABC
 
 	public:
 
-        ABC(RNG& rng);
-        double perturb(RNG& rng);
-        double log_likelihood() const;
-        std::vector<char> to_blob() const;
-        void from_blob(const std::vector<char>& vec);
-        std::string to_string() const;
+        inline ABC(RNG& rng);
+        inline double perturb(RNG& rng);
+        inline double log_likelihood() const;
+        inline std::vector<char> to_blob() const;
+        inline void from_blob(const std::vector<char>& vec);
+        inline std::string to_string() const;
 
 
     /* Static things */
@@ -45,7 +45,7 @@ class ABC
         static ParameterNames parameter_names;
 
         // Data loader
-        static void load_data(const char* filename);
+        inline static void load_data(const char* filename);
 };
 
 /* IMPLEMENTATIONS FOLLOW */
@@ -53,7 +53,7 @@ class ABC
 std::vector<double> ABC::data_xs;
 ParameterNames ABC::parameter_names(0);
 
-void ABC::load_data(const char* filename)
+inline void ABC::load_data(const char* filename)
 {
     data_xs.clear();
     std::fstream fin(filename, std::ios::in);
@@ -74,8 +74,11 @@ void ABC::load_data(const char* filename)
     parameter_names = ParameterNames(names);
 }
 
-ABC::ABC(RNG& rng)
+inline ABC::ABC(RNG& rng)
 {
+    if(data_xs.size() == 0)
+        load_data("Examples/abc_data.txt");
+
     mu = -10.0 + 20.0*rng.rand();
     sigma = exp(-10.0 + 20.0*rng.rand());
 
@@ -84,7 +87,7 @@ ABC::ABC(RNG& rng)
         n = rng.randn();
 }
 
-double ABC::perturb(RNG& rng)
+inline double ABC::perturb(RNG& rng)
 {
     double logh = 0.0;
 
@@ -115,7 +118,7 @@ double ABC::perturb(RNG& rng)
     return logh;
 }
 
-double ABC::log_likelihood() const
+inline double ABC::log_likelihood() const
 {
     double logl = 0.0;
 
@@ -133,7 +136,7 @@ double ABC::log_likelihood() const
     return logl;
 }
 
-void ABC::from_blob(const std::vector<char>& vec)
+inline void ABC::from_blob(const std::vector<char>& vec)
 {
     int chars_per_element = sizeof(double)/sizeof(char);
 
@@ -147,7 +150,7 @@ void ABC::from_blob(const std::vector<char>& vec)
     }
 }
 
-std::vector<char> ABC::to_blob() const
+inline std::vector<char> ABC::to_blob() const
 {
     int chars_per_element = sizeof(double)/sizeof(char);
     int chars_needed = (2 + ns.size())*chars_per_element;
@@ -167,7 +170,7 @@ std::vector<char> ABC::to_blob() const
     return result;
 }
 
-std::string ABC::to_string() const
+inline std::string ABC::to_string() const
 {
     std::stringstream ss;
     ss << mu << ',' << sigma << ',';

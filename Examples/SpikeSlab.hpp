@@ -1,7 +1,7 @@
 #ifndef DNest5_SpikeSlab_hpp
 #define DNest5_SpikeSlab_hpp
 
-#include <DNest5/UniformModel.hpp>
+#include "UniformModel.hpp"
 
 namespace DNest5
 {
@@ -13,25 +13,25 @@ class SpikeSlab : public UniformModel<20, SpikeSlab>
 
     public:
 
-        SpikeSlab(RNG& rng);
-        void us_to_params();
-        double log_likelihood() const;
+        inline SpikeSlab(RNG& rng);
+        inline void us_to_params();
+        inline double log_likelihood() const;
 };
 
 /* Implementations follow */
 
-SpikeSlab::SpikeSlab(RNG& rng)
+inline SpikeSlab::SpikeSlab(RNG& rng)
 :UniformModel(rng)
 {
     us_to_params();
 }
 
-void SpikeSlab::us_to_params()
+inline void SpikeSlab::us_to_params()
 {
     xs = us;
 }
 
-double SpikeSlab::log_likelihood() const
+inline double SpikeSlab::log_likelihood() const
 {
     double logL1 = 0.0;
     double logL2 = 0.0;

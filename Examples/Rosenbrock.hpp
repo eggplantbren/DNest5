@@ -1,7 +1,7 @@
 #ifndef DNest5_Rosenbrock_hpp
 #define DNest5_Rosenbrock_hpp
 
-#include <DNest5/UniformModel.hpp>
+#include "UniformModel.hpp"
 
 namespace DNest5
 {
@@ -12,26 +12,26 @@ class Rosenbrock : public UniformModel<50, Rosenbrock>
 
     public:
 
-        Rosenbrock(RNG& rng);
-        void us_to_params();
-        double log_likelihood() const;
+        inline Rosenbrock(RNG& rng);
+        inline void us_to_params();
+        inline double log_likelihood() const;
 };
 
 /* Implementations follow */
 
-Rosenbrock::Rosenbrock(RNG& rng)
+inline Rosenbrock::Rosenbrock(RNG& rng)
 :UniformModel(rng)
 {
     us_to_params();
 }
 
-void Rosenbrock::us_to_params()
+inline void Rosenbrock::us_to_params()
 {
     for(size_t i=0; i<xs.size(); ++i)
         xs[i] = -10.0 + 20.0*us[i];
 }
 
-double Rosenbrock::log_likelihood() const
+inline double Rosenbrock::log_likelihood() const
 {
     double logl = 0.0;
 
