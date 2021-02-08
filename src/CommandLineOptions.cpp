@@ -1,41 +1,7 @@
-#ifndef DNest5_CommandLineOptions_hpp
-#define DNest5_CommandLineOptions_hpp
-
-#include <cstdlib>
-#include <iostream>
-#include <sstream>
-#include <string>
-#include <unistd.h>
+#include "CommandLineOptions.h"
 
 namespace DNest5
 {
-
-/*
-* Command Line Options for postprocessing
-*/
-
-class CommandLineOptions
-{
-	private:
-        double temperature;
-        bool abc;
-        double abc_fraction;
-
-	public:
-        // Construct
-		CommandLineOptions(int argc, char** argv);
-
-		// Print help message
-		void print_help() const;
-
-        // Getters
-        inline double get_temperature() const { return temperature; }
-        inline bool get_abc() const { return abc; }
-        inline double get_abc_fraction() const { return abc_fraction; }
-};
-
-
-/* IMPLEMENTATIONS FOLLOW */
 
 	// The following code is based on the example given at
 	// http://www.gnu.org/software/libc/manual/html_node/Example-of-Getopt.html#Example-of-Getopt
@@ -98,7 +64,5 @@ void CommandLineOptions::print_help() const
     exit(0);
 }
 
-} // namespace DNest5
-
-#endif
+} // namespace
 
