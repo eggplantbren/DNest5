@@ -10,7 +10,6 @@ Database::Database()
 
     pragmas();
     db << "BEGIN;";
-    clear_previous();
     create_tables();
     create_indexes();
     create_views();
@@ -96,14 +95,6 @@ SELECT p.id particle,\n\
     SELECT level, COUNT(*) num_particles\n\
     FROM levels_leq_particles\n\
     GROUP BY level;";
-}
-
-void Database::clear_previous()
-{
-    db << "DROP TABLE IF EXISTS samplers;";
-    db << "DROP TABLE IF EXISTS particles;";
-    db << "DROP TABLE IF EXISTS levels;";
-    db << "DROP TABLE IF EXISTS rngs;";
 }
 
 int Database::num_full_particles(int sampler_id)

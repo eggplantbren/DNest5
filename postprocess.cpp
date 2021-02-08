@@ -1,6 +1,6 @@
-#include <DNest5/CommandLineOptions.hpp>
-#include <DNest5/Database.hpp>
-#include <ModelType.hpp>
+#include "CommandLineOptions.h"
+#include "Postprocessing.h"
+#include "ModelType.h"
 
 using namespace DNest5;
 
