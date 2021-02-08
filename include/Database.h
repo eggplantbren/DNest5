@@ -59,7 +59,7 @@ inline void postprocess(const CommandLineOptions& options)
     std::cout << "--------------------\n" << std::endl;
 
     // A read-only database connection
-    sqlite::database reader(Options::db_filename,
+    sqlite::database reader("output/dnest5.db",
                             sqlite::sqlite_config { sqlite::OpenFlags::READONLY,
                                                     nullptr,
                                                     sqlite::Encoding::ANY });

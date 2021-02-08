@@ -6,6 +6,7 @@ default:
 	$(CXX) $(FLAGS) $(INCLUDE) -c src/CommandLineOptions.cpp
 	$(CXX) $(FLAGS) $(INCLUDE) -c src/Database.cpp
 	$(CXX) $(FLAGS) $(INCLUDE) -c src/Levels.cpp
+	$(CXX) $(FLAGS) $(INCLUDE) -c src/Misc.cpp
 	$(CXX) $(FLAGS) $(INCLUDE) -c src/ParameterNames.cpp
 	$(CXX) $(FLAGS) $(INCLUDE) -c src/Particle.cpp
 	$(CXX) $(FLAGS) $(INCLUDE) -c src/Options.cpp

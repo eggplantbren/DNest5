@@ -4,7 +4,7 @@ namespace DNest5
 {
 
 Database::Database()
-:db(Options::db_filename)
+:db("output/dnest5.db")
 {
     std::cout << "Initialising database." << std::endl;
 

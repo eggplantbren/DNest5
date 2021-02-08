@@ -38,17 +38,16 @@ class Options
                 int _new_level_interval = 10000,
                 int _save_interval = 1000,
                 double _thin = 0.1,
-                std::optional<int> max_num_levels = 100, //std::optional<int>(),
+                std::optional<int> _max_num_levels = std::optional<int>{},
                 double _lambda = 10.0,
                 double _beta = 100.0,
                 int _max_num_saves = 100000,
-                std::optional<int> _rng_seed = std::optional<int>());
+                std::optional<int> _rng_seed = std::optional<int>{});
 
         // Constructor that loads from a YAML file
         Options(const char* yaml_file);
 
         // Stuff the user doesn't need to control
-        static constexpr auto db_filename = "output/dnest5.db";
         static constexpr int stdout_precision = 12;
         static constexpr int rng_seed_gap = 123;
         static constexpr int level_save_gap = 10;
