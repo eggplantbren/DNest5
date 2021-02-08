@@ -1,5 +1,5 @@
-#ifndef DNest5_ModelType_hpp
-#define DNest5_ModelType_hpp
+#ifndef DNest5_ModelType_h
+#define DNest5_ModelType_h
 
 #include <Examples/StraightLine.hpp>
 
