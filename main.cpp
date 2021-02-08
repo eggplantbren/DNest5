@@ -1,12 +1,12 @@
 #include <iostream>
-#include <DNest5/Sampler.hpp>
-#include <ModelType.hpp>
+#include "Examples/StraightLine.hpp"
+#include "Sampler.hpp"
 
 using namespace DNest5;
 
 int main()
 {
-    Sampler<ModelType> sampler(Options("options.yaml"));
+    Sampler<StraightLine> sampler(Options("options.yaml"));
     sampler.run();
     return 0;
 }

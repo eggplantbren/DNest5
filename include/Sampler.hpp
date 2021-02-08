@@ -1,10 +1,10 @@
 #ifndef DNest5_Sampler_hpp
 #define DNest5_Sampler_hpp
 
-#include <DNest5/Database.hpp>
-#include <DNest5/Levels.hpp>
-#include <DNest5/Options.hpp>
-#include <DNest5/Particle.hpp>
+#include "Database.h"
+#include "Levels.h"
+#include "Options.h"
+#include "Particle.h"
 #include <memory>
 #include <mutex>
 #include <thread>
@@ -54,35 +54,34 @@ class Sampler
         std::unique_ptr<Barrier> barrier;
 
         // Do a Metropolis step of particle k, or of its level
-        bool metropolis_step(int k, int thread);
-        void metropolis_step_level(int k, int thread);
+        inline bool metropolis_step(int k, int thread);
+        inline void metropolis_step_level(int k, int thread);
 
         // Save levels or particles
-        void save_levels();
-        void save_particle(int k, bool with_params);
+        inline void save_levels();
+        inline void save_particle(int k, bool with_params);
 
         // Explore until a new level or save occurs.
-        void explore(int thread);
+        inline void explore(int thread);
 
         // Run a thread
-        void run_thread(int thread);
+        inline void run_thread(int thread);
 
         // Prune lagging particles
-        void prune_laggards();
+        inline void prune_laggards();
         int pruned;
 
     public:
 
         // Construct with a set of options.
-        Sampler(Options _options = Options());
-
-        void run();
+        inline Sampler(Options _options = Options());
+        inline void run();
 };
 
 /* IMPLEMENTATIONS FOLLOW */
 
 template<typename T>
-Sampler<T>::Sampler(Options _options)
+inline Sampler<T>::Sampler(Options _options)
 :options(std::move(_options))
 ,levels(options)
 ,levels_copies(options.num_threads, options)
@@ -162,7 +161,7 @@ Sampler<T>::Sampler(Options _options)
 }
 
 template<typename T>
-void Sampler<T>::run()
+inline void Sampler<T>::run()
 {
     // Create the barrier
     barrier.reset(new Barrier(options.num_threads));
@@ -186,7 +185,7 @@ void Sampler<T>::run()
 }
 
 template<typename T>
-void Sampler<T>::run_thread(int thread)
+inline void Sampler<T>::run_thread(int thread)
 {
     auto& db = database.db;
 
@@ -269,7 +268,7 @@ void Sampler<T>::run_thread(int thread)
 }
 
 template<typename T>
-void Sampler<T>::explore(int thread)
+inline void Sampler<T>::explore(int thread)
 {
     // Temporary
     auto& rng = rngs[thread];
@@ -291,7 +290,7 @@ void Sampler<T>::explore(int thread)
 }
 
 template<typename T>
-void Sampler<T>::save_levels()
+inline void Sampler<T>::save_levels()
 {
     // Alias
     auto& db = database.db;
@@ -319,7 +318,7 @@ void Sampler<T>::save_levels()
 }
 
 template<typename T>
-void Sampler<T>::save_particle(int k, bool with_params)
+inline void Sampler<T>::save_particle(int k, bool with_params)
 {
     // Alias
     auto& db = database.db;
@@ -346,7 +345,7 @@ void Sampler<T>::save_particle(int k, bool with_params)
 
 
 template<typename T>
-bool Sampler<T>::metropolis_step(int k, int thread)
+inline bool Sampler<T>::metropolis_step(int k, int thread)
 {
     // Return value
     bool accepted = false;
@@ -390,7 +389,7 @@ bool Sampler<T>::metropolis_step(int k, int thread)
 
 
 template<typename T>
-void Sampler<T>::metropolis_step_level(int k, int thread)
+inline void Sampler<T>::metropolis_step_level(int k, int thread)
 {
     // Access correct RNG
     auto& rng = rngs[thread];
@@ -431,7 +430,7 @@ void Sampler<T>::metropolis_step_level(int k, int thread)
 }
 
 template<typename T>
-void Sampler<T>::prune_laggards()
+inline void Sampler<T>::prune_laggards()
 {
     // Find log push of each particle
     std::vector<double> log_push(options.num_particles);

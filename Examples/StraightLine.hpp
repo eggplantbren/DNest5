@@ -1,7 +1,7 @@
 #ifndef DNest5_StraightLine_hpp
 #define DNest5_StraightLine_hpp
 
-#include <DNest5/UniformModel.hpp>
+#include "UniformModel.hpp"
 #include <fstream>
 
 namespace DNest5
@@ -19,14 +19,14 @@ class StraightLine : public UniformModel<3, StraightLine>
     public:
 
         // Data loader
-        static void load_data(const char* filename);
+        inline static void load_data(const char* filename);
 
         // Naming scheme
         static const ParameterNames parameter_names;
 
-        StraightLine(RNG& rng);
-        void us_to_params();
-        double log_likelihood() const;
+        inline StraightLine(RNG& rng);
+        inline void us_to_params();
+        inline double log_likelihood() const;
 };
 
 /* Implementations follow */
@@ -34,7 +34,7 @@ class StraightLine : public UniformModel<3, StraightLine>
 // Data and its loading
 std::vector<double> StraightLine::data_xs;
 std::vector<double> StraightLine::data_ys;
-void StraightLine::load_data(const char* filename)
+inline void StraightLine::load_data(const char* filename)
 {
     data_xs.clear();
     data_ys.clear();
@@ -51,7 +51,7 @@ void StraightLine::load_data(const char* filename)
 // Define parameter names
 const ParameterNames StraightLine::parameter_names({"m", "b", "sigma"});
 
-StraightLine::StraightLine(RNG& rng)
+inline StraightLine::StraightLine(RNG& rng)
 :UniformModel(rng)
 {
     us_to_params();
@@ -59,14 +59,14 @@ StraightLine::StraightLine(RNG& rng)
         load_data("Examples/road.txt");
 }
 
-void StraightLine::us_to_params()
+inline void StraightLine::us_to_params()
 {
     param("m") = 1000.0*qnorm(us[0]);
     param("b") = 1000.0*qnorm(us[1]);
     param("sigma") = exp(-10.0 + 20.0*us[2]);
 }
 
-double StraightLine::log_likelihood() const
+inline double StraightLine::log_likelihood() const
 {
     double logl = 0.0;
 

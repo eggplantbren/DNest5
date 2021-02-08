@@ -128,30 +128,6 @@ void Levels::adjust(int level, int e, int v, int a, int t)
     tries[level] += t;
 }
 
-
-// Record stats
-template<typename T>
-void Levels::record_stats(const Particle<T>& particle, bool accepted)
-{
-    const auto& [t, logl, tb, level] = particle;
-
-    // Exceeds and visits
-    for(int i=level; i<(int(logxs.size()) - 1); ++i)
-    {
-        ++visits[i];
-        if(pairs[i+1] < Pair{logl, tb})
-            ++exceeds[i];
-        else
-            break;
-    }
-
-    // Accepts and tries
-    if(accepted)
-        ++accepts[level];
-    ++tries[level];
-}
-
-
 double Levels::recent_logl_changes() const
 {
     int end   = int(logxs.size());

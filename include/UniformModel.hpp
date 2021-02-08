@@ -1,9 +1,10 @@
 #ifndef DNest5_UniformModel_hpp
 #define DNest5_UniformModel_hpp
 
+#include "Options.h"
+#include "ParameterNames.h"
+
 #include <cstring>
-#include <DNest5/ParameterNames.hpp>
-#include <DNest5/Options.hpp>
 #include <map>
 #include <sstream>
 #include <string>
@@ -32,22 +33,22 @@ class UniformModel
     public:
 
         // Default constructor sets up the vectors
-        UniformModel(RNG& rng);
-        virtual ~UniformModel() = default;
+        inline UniformModel(RNG& rng);
+        inline virtual ~UniformModel() = default;
 
         // Functions specified here and not to be overridden
-        double perturb(RNG& rng);
-        std::vector<char> to_blob() const;
-        void from_blob(const std::vector<char>& vec);
-        std::string to_string() const;
+        inline double perturb(RNG& rng);
+        inline std::vector<char> to_blob() const;
+        inline void from_blob(const std::vector<char>& vec);
+        inline std::string to_string() const;
 
         // Access parameters by name
-        virtual double& param(std::string&& name);
-        virtual const double& param(std::string&& name) const;
+        inline virtual double& param(std::string&& name);
+        inline virtual const double& param(std::string&& name) const;
 
         // Functions to be specified in the derived class
-        virtual void us_to_params() = 0;
-        virtual double log_likelihood() const = 0;
+        inline virtual void us_to_params() = 0;
+        inline virtual double log_likelihood() const = 0;
 
         // This is the default naming scheme, but it may or may not be used
         static const ParameterNames parameter_names;
@@ -59,7 +60,7 @@ template<int num_params, typename T>
 const ParameterNames UniformModel<num_params, T>::parameter_names(num_params);
 
 template<int num_params, typename T>
-UniformModel<num_params, T>::UniformModel(RNG& rng)
+inline UniformModel<num_params, T>::UniformModel(RNG& rng)
 :us(num_params)
 ,xs(num_params)
 {
@@ -68,7 +69,7 @@ UniformModel<num_params, T>::UniformModel(RNG& rng)
 }
 
 template<int num_params, typename T>
-double UniformModel<num_params, T>::perturb(RNG& rng)
+inline double UniformModel<num_params, T>::perturb(RNG& rng)
 {
     int num = 1;
     if(rng.rand() <= 0.5)
@@ -87,7 +88,7 @@ double UniformModel<num_params, T>::perturb(RNG& rng)
 
 
 template<int num_params, typename T>
-std::vector<char> UniformModel<num_params, T>::to_blob() const
+inline std::vector<char> UniformModel<num_params, T>::to_blob() const
 {
     // Could just return xs, but writing this in full
     // to show how it would be done if the parameter space were
@@ -106,7 +107,7 @@ std::vector<char> UniformModel<num_params, T>::to_blob() const
 
 
 template<int num_params, typename T>
-void UniformModel<num_params, T>::from_blob(const std::vector<char>& vec)
+inline void UniformModel<num_params, T>::from_blob(const std::vector<char>& vec)
 {
     int chars_per_element = sizeof(double)/sizeof(char);
     int chars_needed = xs.size()*chars_per_element;
@@ -121,7 +122,7 @@ void UniformModel<num_params, T>::from_blob(const std::vector<char>& vec)
 }
 
 template<int num_params, typename T>
-std::string UniformModel<num_params, T>::to_string() const
+inline std::string UniformModel<num_params, T>::to_string() const
 {
     std::stringstream ss;
     ss << std::setprecision(Options::stdout_precision);
@@ -136,13 +137,13 @@ std::string UniformModel<num_params, T>::to_string() const
 
 
 template<int num_params, typename T>
-double& UniformModel<num_params, T>::param(std::string&& name)
+inline double& UniformModel<num_params, T>::param(std::string&& name)
 {
     return xs[T::parameter_names.index(std::move(name))];
 }
 
 template<int num_params, typename T>
-const double& UniformModel<num_params, T>::param(std::string&& name) const
+inline const double& UniformModel<num_params, T>::param(std::string&& name) const
 {
     return xs[T::parameter_names.index(std::move(name))];
 }

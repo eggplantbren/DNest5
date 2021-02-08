@@ -1,9 +1,10 @@
 #ifndef DNest5_Levels_h
 #define DNest5_Levels_h
 
+#include "Particle.h"
+#include "Options.h"
+
 #include <algorithm>
-#include <DNest5/Particle.hpp>
-#include <DNest5/Options.hpp>
 #include <optional>
 #include <Tools/Misc.hpp>
 #include <vector>
@@ -48,7 +49,7 @@ class Levels
 
         // Record stats
         template<typename T>
-        void record_stats(const Particle<T>& particle, bool accepted);
+        inline void record_stats(const Particle<T>& particle, bool accepted);
 
         // Revise logxs
         void revise();
@@ -67,17 +68,48 @@ class Levels
         double recent_logl_changes() const;
 
         // Various getters
-        int get_num_levels() const { return int(logxs.size()); }
-        double get_logx(int level) const { return logxs[level]; }
-        const Pair& get_pair(int level) const { return pairs[level]; }
-        const Pair& get_top() const { return pairs.back(); }
-        double get_log_push(int level) const { return log_push[level]; }
-        unsigned long long get_exceeds(int level) const { return exceeds[level]; }
-        unsigned long long get_visits(int level) const { return visits[level]; }
-        unsigned long long get_accepts(int level) const { return accepts[level]; }
-        unsigned long long get_tries(int level) const { return tries[level]; }
-        bool get_push_is_active() const { return push_is_active; }
+        inline int get_num_levels() const { return int(logxs.size()); }
+        inline double get_logx(int level) const { return logxs[level]; }
+        inline const Pair& get_pair(int level) const { return pairs[level]; }
+        inline const Pair& get_top() const { return pairs.back(); }
+        inline double get_log_push(int level) const { return log_push[level]; }
+        inline unsigned long long get_exceeds(int level) const
+        { return exceeds[level]; }
+        inline unsigned long long get_visits(int level) const
+        { return visits[level]; }
+        inline unsigned long long get_accepts(int level) const
+        { return accepts[level]; }
+        inline unsigned long long get_tries(int level) const
+        { return tries[level]; }
+        inline bool get_push_is_active() const
+        { return push_is_active; }
 };
+
+/* TEMPLATE IMPLEMENTATIONS */
+
+
+// Record stats
+template<typename T>
+inline void Levels::record_stats(const Particle<T>& particle, bool accepted)
+{
+    const auto& [t, logl, tb, level] = particle;
+
+    // Exceeds and visits
+    for(int i=level; i<(int(logxs.size()) - 1); ++i)
+    {
+        ++visits[i];
+        if(pairs[i+1] < Pair{logl, tb})
+            ++exceeds[i];
+        else
+            break;
+    }
+
+    // Accepts and tries
+    if(accepted)
+        ++accepts[level];
+    ++tries[level];
+}
+
 
 } // namespace
 
