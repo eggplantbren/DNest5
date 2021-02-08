@@ -1,9 +1,9 @@
 .build/*
 output/*
 main
-Makefile
 postprocess
 __pycache__
+*.o
 Template/output/*
 .test_accuracy_output.csv
 
