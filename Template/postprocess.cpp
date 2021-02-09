@@ -1,13 +1,13 @@
-#include <DNest5/CommandLineOptions.hpp>
-#include <DNest5/Database.hpp>
-#include "ModelType.hpp"
+#include "CommandLineOptions.h"
+#include "Postprocessing.h"
+#include "ModelType.h"
 
-using namespace DNest5_Template;
+using namespace DNest5;
 
 int main(int argc, char** argv)
 {
-    DNest5::CommandLineOptions options(argc, argv);
-    DNest5::postprocess<ModelType>(options);
+    CommandLineOptions options(argc, argv);
+    postprocess<DNest5_Template::ModelType>(options);
     return 0;
 }
 

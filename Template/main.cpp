@@ -1,13 +1,14 @@
 #include <iostream>
-#include <DNest5/Sampler.hpp>
-#include "ModelType.hpp"
+#include <Misc.h>
+#include <Sampler.hpp>
+#include "ModelType.h"
 
-using namespace DNest5_Template;
 using DNest5::Options, DNest5::Sampler;
 
 int main()
 {
-    Sampler<ModelType> sampler(Options("options.yaml"));
+    DNest5::clear_output_dir();
+    Sampler<DNest5_Template::ModelType> sampler(Options("options.yaml"));
     sampler.run();
     return 0;
 }
