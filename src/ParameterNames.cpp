@@ -3,6 +3,11 @@
 namespace DNest5
 {
 
+ParameterNames::ParameterNames()
+:num_params(0)
+{
+
+}
 
 
 ParameterNames::ParameterNames(int _num_params)
@@ -24,6 +29,12 @@ ParameterNames::ParameterNames(const std::vector<std::string>& _names)
 {
     for(int i=0; i<num_params; ++i)
         lookup.emplace(names[i], i);
+}
+
+void ParameterNames::add(std::string name)
+{
+    names.push_back(name);
+    lookup.emplace(std::move(name), num_params++);
 }
 
 std::string ParameterNames::csv_header() const
