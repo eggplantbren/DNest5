@@ -18,7 +18,7 @@ class MyModel : public DNest5::UniformModel<5, MyModel>
 
     public:
         inline MyModel(RNG& rng);
-        inline us_to_params();
+        inline void us_to_params();
         inline double log_likelihood() const;
 };
 
