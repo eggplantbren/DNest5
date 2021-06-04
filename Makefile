@@ -10,6 +10,7 @@ default:
 	$(CXX) $(FLAGS) $(INCLUDE) -c src/ParameterNames.cpp
 	$(CXX) $(FLAGS) $(INCLUDE) -c src/Particle.cpp
 	$(CXX) $(FLAGS) $(INCLUDE) -c src/Options.cpp
+	$(CXX) $(FLAGS) $(INCLUDE) -c src/YAMLModel.cpp
 	ar rcs libdnest5.a *.o
 	$(CXX) $(FLAGS) $(INCLUDE) -c main.cpp
 	$(CXX) $(FLAGS) $(INCLUDE) -c postprocess.cpp
