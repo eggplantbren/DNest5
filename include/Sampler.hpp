@@ -31,8 +31,10 @@ class Sampler
         // A database connection for I/O
         Database database;
 
-        // Prepared statement to save particles
+        // Prepared statements
         std::optional<sqlite::database_binder> save_particle_ps;
+        std::optional<sqlite::database_binder> save_level_ps;
+
 
         // A set of options
         Options options;
@@ -97,6 +99,19 @@ inline Sampler<T>::Sampler(Options _options)
 {
     // Shorthand to database connection
     auto& db = database.db;
+
+    // Prepared statements
+    // Have to emplace here because operator = doesn't exist for database_binder type
+    save_particle_ps.emplace(database.db << "INSERT INTO particles (sampler, level, params, logl, tb)\
+               VALUES (?, ?, ?, ?, ?);");
+    save_level_ps.emplace(database.db << "INSERT INTO levels\
+               (id, logx, logl, tb, exceeds, visits, accepts, tries)\
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)\
+               ON CONFLICT (id) DO UPDATE\
+               SET (logx, exceeds, visits, accepts, tries) = \
+               (excluded.logx, excluded.exceeds, excluded.visits, \
+                excluded.accepts, excluded.tries);");
+
     db << "BEGIN;";
 
     // Initialise the sampler, first by setting a sampler ID.
@@ -162,10 +177,6 @@ inline Sampler<T>::Sampler(Options _options)
     std::cout << "done.\n" << std::endl;
 
     db << "COMMIT;";
-
-    // Have to emplace here because operator = doesn't exist for database_binder type
-    save_particle_ps.emplace(database.db << "INSERT INTO particles (sampler, level, params, logl, tb)\
-               VALUES (?, ?, ?, ?, ?);");
 }
 
 template<typename T>
@@ -300,9 +311,6 @@ inline void Sampler<T>::explore(int thread)
 template<typename T>
 inline void Sampler<T>::save_levels()
 {
-    // Alias
-    auto& db = database.db;
-
     int num_levels = levels.get_num_levels();
     for(int i=0; i<num_levels; ++i)
     {
@@ -313,15 +321,10 @@ inline void Sampler<T>::save_levels()
         a = levels.get_accepts(i); t = levels.get_tries(i);
 
         // Upsert each level
-        db << "INSERT INTO levels\
-               (id, logx, logl, tb, exceeds, visits, accepts, tries)\
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?)\
-               ON CONFLICT (id) DO UPDATE\
-               SET (logx, exceeds, visits, accepts, tries) = \
-               (excluded.logx, excluded.exceeds, excluded.visits, \
-                excluded.accepts, excluded.tries);"
+        (*save_level_ps)
            << i << levels.get_logx(i) << logl << tb
            << e << v << a << t;
+        (*save_level_ps)++;
     }
 }
 
