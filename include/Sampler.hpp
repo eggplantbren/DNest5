@@ -7,6 +7,7 @@
 #include "Particle.h"
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <thread>
 #include <Tools/Barrier.hpp>
 #include <Tools/RNG.hpp>
@@ -29,6 +30,9 @@ class Sampler
 
         // A database connection for I/O
         Database database;
+
+        // Prepared statement to save particles
+        std::optional<sqlite::database_binder> save_particle_ps;
 
         // A set of options
         Options options;
@@ -158,6 +162,10 @@ inline Sampler<T>::Sampler(Options _options)
     std::cout << "done.\n" << std::endl;
 
     db << "COMMIT;";
+
+    // Have to emplace here because operator = doesn't exist for database_binder type
+    save_particle_ps.emplace(database.db << "INSERT INTO particles (sampler, level, params, logl, tb)\
+               VALUES (?, ?, ?, ?, ?);");
 }
 
 template<typename T>
@@ -331,10 +339,9 @@ inline void Sampler<T>::save_particle(int k, bool with_params)
     if(with_params)
         blob = t.to_blob();
 
-    // Insert into the DB
-    db << "INSERT INTO particles (sampler, level, params, logl, tb)\
-            VALUES (?, ?, ?, ?, ?);"
-       << sampler_id << level << blob << logl << tb;
+    // Bind values and execute prepared statement
+    (*save_particle_ps) << sampler_id << level << blob << logl << tb;
+    (*save_particle_ps)++;
 
     // Stdout message
     std::cout << "Saved particle ";
