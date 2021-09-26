@@ -328,9 +328,6 @@ inline void Sampler<T>::save_levels()
 template<typename T>
 inline void Sampler<T>::save_particle(int k, bool with_params)
 {
-    // Alias
-    auto& db = database.db;
-
     // Unpack
     const auto& [t, logl, tb, level] = particles[k];
 
