@@ -214,7 +214,12 @@ inline void Sampler<T>::run_thread(int thread)
         if(thread == 0 && !done)
         {
             std::cout << "Exploring ["
-                      << levels.get_num_levels() << " levels, ";
+                      << levels.get_num_levels();
+            std::cout << " levels, ";
+            if(levels.get_push_is_active())
+                std::cout << "still building, ";
+            else
+                std::cout << "done building, ";
             std::cout << "highest logl = "
                       << std::get<0>(levels.get_top()) << "]..." << std::flush;
 
