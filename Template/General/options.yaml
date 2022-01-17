@@ -1,0 +1,12 @@
+# A configuration file for DNest5
+---
+num_particles: 5
+num_threads: 5
+new_level_interval: 10000
+save_interval: 1000
+thin: 0.1
+max_num_levels: "auto"
+lambda: 10.0
+beta: 100.0
+max_num_saves: 100000
+rng_seed: "auto"
