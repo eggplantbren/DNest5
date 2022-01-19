@@ -47,6 +47,20 @@ void Levels::add_to_stash(Pair&& pair)
 
 bool Levels::create_level()
 {
+    // See if push should be disabled
+    if(options.max_num_levels.has_value())
+    {
+        if(int(logxs.size()) >= *options.max_num_levels)
+            push_is_active = false;
+    }
+    else
+    {
+        if(recent_logl_changes() <= 0.5)
+            push_is_active = false;
+    }
+    if(!push_is_active)
+        std::cout << "Done creating levels." << std::endl;
+
     // Don't do anything if the stash is too small
     if(int(stash.size()) < options.new_level_interval)
         return false;
@@ -62,20 +76,6 @@ bool Levels::create_level()
     tries.push_back(0);
     log_push.push_back(0.0);
     stash.clear();
-
-    // See if push should be disabled
-    if(options.max_num_levels.has_value())
-    {
-        if(int(logxs.size()) >= *options.max_num_levels)
-            push_is_active = false;
-    }
-    else
-    {
-        if(recent_logl_changes() <= 0.5)
-            push_is_active = false;
-    }
-    if(!push_is_active)
-        std::cout << "Done creating levels." << std::endl;
 
     // Recompute log_push
     for(int i=0; i<int(logxs.size()); ++i)
