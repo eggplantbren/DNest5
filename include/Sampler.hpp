@@ -444,6 +444,9 @@ inline void Sampler<T>::metropolis_step_level(int k, int thread)
 template<typename T>
 inline void Sampler<T>::prune_laggards()
 {
+    if(!levels.get_push_is_active())
+        return;
+
     // Find log push of each particle
     std::vector<double> log_push(options.num_particles);
     for(int i=0; i<options.num_particles; ++i)
