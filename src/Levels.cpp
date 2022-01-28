@@ -58,8 +58,6 @@ bool Levels::create_level()
         if(recent_logl_changes() <= 0.5)
             push_is_active = false;
     }
-    if(!push_is_active)
-        std::cout << "Done creating levels." << std::endl;
 
     // Don't do anything if the stash is too small
     if(int(stash.size()) < options.new_level_interval)
@@ -91,6 +89,9 @@ bool Levels::create_level()
 
     std::cout << "Created level " << logxs.size() << " with logl = ";
     std::cout << std::get<0>(pairs.back()) << "." << std::endl;
+
+    if(!push_is_active)
+        std::cout << "Done creating levels." << std::endl;
 
     return true;
 }
