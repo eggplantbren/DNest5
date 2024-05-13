@@ -13,7 +13,7 @@ default:
 	ar rcs libdnest5.a *.o
 	$(CXX) $(FLAGS) $(INCLUDE) -c main.cpp
 	$(CXX) $(FLAGS) $(INCLUDE) -c postprocess.cpp
-	$(CXX) -pthread -L . -o main main.o -lpthread -lsqlite3 -lyaml-cpp -ldnest5
-	$(CXX) -pthread -L . -o postprocess postprocess.o -lpthread -lsqlite3 -lyaml-cpp -ldnest5
+	$(CXX) -pthread -L . -o main main.o -lpthread -lsqlite3 -ldnest5 -lyaml-cpp
+	$(CXX) -pthread -L . -o postprocess postprocess.o -lpthread -lsqlite3 -ldnest5 -lyaml-cpp
 	rm -f *.o
 
