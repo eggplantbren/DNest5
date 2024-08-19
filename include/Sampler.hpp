@@ -339,11 +339,18 @@ inline void Sampler<T>::save_particle(int k, bool with_params)
     // Unpack
     const auto& [t, logl, tb, level] = particles[k];
 
-    // Maybe a blob
-    std::string s = t.to_string();
 
-    // Bind values and execute prepared statement
-    (*save_particle_ps) << sampler_id << level << s << logl << tb;
+    if(with_params)
+    {
+        std::string s = t.to_string();
+
+        // Bind values and execute prepared statement
+        (*save_particle_ps) << sampler_id << level << s << logl << tb;
+    }
+    else
+        (*save_particle_ps) << sampler_id << level << nullptr << logl << tb;
+
+
     (*save_particle_ps)++;
 
     // Stdout message
