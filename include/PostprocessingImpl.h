@@ -207,11 +207,10 @@ inline void postprocess(const CommandLineOptions& options)
         int k = rng.rand_int(full_pids.size());
         if(rng.rand() <= exp(full_logps[k] - max_logp_full))
         {
-            std::vector<char> blob;
+            std::string s;
             reader << "SELECT params FROM particles WHERE id = ?;"
-                   << full_pids[k] >> blob;
-            t.from_blob(blob);
-            fout << t.to_string() << std::endl;
+                   << full_pids[k] >> s;
+            fout << s << std::endl;
             ++count;
         }
     };

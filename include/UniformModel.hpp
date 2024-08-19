@@ -87,39 +87,39 @@ inline double UniformModel<num_params, T>::perturb(RNG& rng)
 }
 
 
-template<int num_params, typename T>
-inline std::vector<char> UniformModel<num_params, T>::to_blob() const
-{
-    // Could just return xs, but writing this in full
-    // to show how it would be done if the parameter space were
-    // more complex
-    int chars_per_element = sizeof(double)/sizeof(char);
-    int chars_needed = xs.size()*chars_per_element;
-    std::vector<char> result(chars_needed);
-    int j = 0;
-    for(size_t i=0; i<xs.size(); ++i)
-    {
-        std::memcpy(&result[j], &xs[i], sizeof(double));
-        j += chars_per_element;
-    }
-    return result;
-}
+//template<int num_params, typename T>
+//inline std::vector<char> UniformModel<num_params, T>::to_blob() const
+//{
+//    // Could just return xs, but writing this in full
+//    // to show how it would be done if the parameter space were
+//    // more complex
+//    int chars_per_element = sizeof(double)/sizeof(char);
+//    int chars_needed = xs.size()*chars_per_element;
+//    std::vector<char> result(chars_needed);
+//    int j = 0;
+//    for(size_t i=0; i<xs.size(); ++i)
+//    {
+//        std::memcpy(&result[j], &xs[i], sizeof(double));
+//        j += chars_per_element;
+//    }
+//    return result;
+//}
 
 
-template<int num_params, typename T>
-inline void UniformModel<num_params, T>::from_blob(const std::vector<char>& vec)
-{
-    int chars_per_element = sizeof(double)/sizeof(char);
-    int chars_needed = xs.size()*chars_per_element;
-    assert(int(vec.size()) == chars_needed);
+//template<int num_params, typename T>
+//inline void UniformModel<num_params, T>::from_blob(const std::vector<char>& vec)
+//{
+//    int chars_per_element = sizeof(double)/sizeof(char);
+//    int chars_needed = xs.size()*chars_per_element;
+//    assert(int(vec.size()) == chars_needed);
 
-    int j = 0;
-    for(size_t i=0; i<xs.size(); ++i)
-    {
-        std::memcpy(&xs[i], &vec[j], sizeof(double));
-        j += chars_per_element;
-    }
-}
+//    int j = 0;
+//    for(size_t i=0; i<xs.size(); ++i)
+//    {
+//        std::memcpy(&xs[i], &vec[j], sizeof(double));
+//        j += chars_per_element;
+//    }
+//}
 
 template<int num_params, typename T>
 inline std::string UniformModel<num_params, T>::to_string() const

@@ -50,7 +50,7 @@ void Database::create_tables()
     (id      INTEGER NOT NULL PRIMARY KEY,\n\
      sampler INTEGER NOT NULL,\n\
      level   INTEGER NOT NULL,\n\
-     params  BLOB,\n\
+     params  TEXT,\n\
      logl    REAL NOT NULL,\n\
      tb      REAL NOT NULL,\n\
      FOREIGN KEY (sampler) REFERENCES samplers (id),\n\
