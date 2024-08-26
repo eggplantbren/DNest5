@@ -69,7 +69,10 @@ All outputs are written to the `output` directory. The files are:
 
 * `dnest5.db`: An SQLite3 database of output, similar to DNest4's `sample.txt`,
     `sample_info.txt`, and `levels.txt`, but combined into one binary file.
-* `figure?.pdf`: Figures exported by `showresults.py`.
+* `figure?.pdf`: Figures exported by `showresults.py`. Note that if you run
+    `showresults.py' while the main process is running, some inconsistencies
+    can appear in Figure 3 between the particles and the levels. These
+    do not have any major consequences.
 * `posterior.db`: An SQLite3 database of posterior samples. Does not store
     the samples themselves, but rather refers back to the appropriate rows
     in `dnest5.db`.
